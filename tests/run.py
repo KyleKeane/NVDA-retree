@@ -23,6 +23,7 @@ REPO_ROOT = os.path.dirname(TESTS_DIR)
 
 def _setup_path() -> None:
 	sys.path.insert(0, os.path.join(REPO_ROOT, "addon", "globalPlugins"))
+	sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
 	sys.path.insert(0, TESTS_DIR)
 	sys.path.insert(0, REPO_ROOT)
 	import builtins

@@ -7,7 +7,7 @@ addon_info = {
 	"addon_version": "0.1.0",
 	"addon_author": "Kyle Keane <kkeane@mit.edu>",
 	"addon_url": "https://github.com/kylekeane/nvda-retree",
-	"addon_docFileName": "readme.md",
+	"addon_docFileName": "readme.html",
 	"addon_minimumNVDAVersion": "2022.1",
 	"addon_lastTestedNVDAVersion": "2024.1",
 	"addon_updateChannel": None,
