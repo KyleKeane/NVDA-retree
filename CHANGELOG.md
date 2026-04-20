@@ -6,7 +6,12 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Changed
+- Bundled in-NVDA help reverted from HTML back to Markdown
+  (`addon/doc/en/readme.md`). The HTML was only introduced to match a
+  stale `docFileName` value; Markdown is what blind users relying on
+  screen readers navigate most comfortably. Both `manifest.ini` and
+  `buildVars.py` now point at `readme.md`.
 
 ## [0.1.0] — foundation
 
