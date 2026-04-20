@@ -6,84 +6,84 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed (pre-release polish)
-- Search dialog: when the picked object has been evicted from the
-  walker cache, announce "Could not locate that object on screen any
-  more" instead of silently closing.
-- `_role_text` (plugin + facets) now prefers `role.displayString` on
-  modern NVDA's Role enum, falling back through legacy
-  `controlTypes.roleLabels` and finally `str(role)`. Previous code
-  produced strings like "Role.BUTTON" on newer NVDA builds.
-- Every `gui.runScriptModalDialog` call is wrapped so that any NVDA
-  API drift fails gracefully with a spoken message rather than
-  crashing the add-on.
-
-### Fixed (pre-release audit round)
-- `identity.get_object_id` no longer collapses `indexInParent=0` (first child)
-  or `windowHandle=0` into the missing-value sentinel. Typed helpers
-  (`_str_of`, `_int_of`) preserve zero and negative values.
-- Semantic navigation now re-anchors to NVDA's current navigator object
-  on every press, so moving the NVDA navigator with other gestures in
-  between ours is no longer ignored.
-- The search dialog's **app** facet now reads `obj.appModule.appName`
-  (was reading a non-existent `obj.appModuleName` and always returning `""`).
-- `inheritance` rewritten so accessibility structure is preserved
-  *inside* an assigned subtree. Previously `body > container > link`
-  flattened to `body > {container, link}`; now it stays nested.
-  `_inherited_descendants` recursion is gone (no recursion-limit risk).
-- NVDA's in-add-on help button opens correctly: we now ship a real
-  `readme.html` (manifest pointed at `.html` but we were shipping `.md`).
-- Assign dialog hides the object being assigned *and its descendants*
-  as candidate parents; previously picking a descendant failed with a
-  CycleError at commit time.
-- `NVDAWalker.search_subtree` uses `collections.deque` for O(1) BFS
-  pops (was `list.pop(0)` — O(n²) over 500 nodes).
-
-### Added
-- `SemanticTree.explicit_descendants(root_id)` — tree operation used
-  by the assign dialog.
-- `facets.py` — pure facet extraction split out of the wx-dependent
-  search dialog so it is unit-testable.
-- 12 more tests: identity edge cases (zero index, zero handle,
-  missing attributes), structure-preserving inheritance, facet
-  extraction, tree descendants. Total: **51 tests**.
-
-### Added
-- Continuous integration (multi-version tests + build) on every push and PR.
-- Release workflow: tagging `vX.Y.Z` publishes a GitHub release with the `.nvda-addon` attached.
-- Issue and pull-request templates; Dependabot configuration; `SECURITY.md`; `CONTRIBUTING.md`.
-- `NVDAWalker.prime_ancestors` and `search_subtree`: populate the
-  weakref cache up the ancestor chain and, on resolution miss, do a
-  bounded BFS from the window root. `SemanticNavigator` uses the
-  latter as its fallback when an explicit assignment points at an
-  object not in cache.
-- Every script guards against `api.getNavigatorObject()` returning
-  `None` and announces a clear message instead of erroring.
-- Test suite grew to **39 cases** covering identity, navigator,
-  storage-corruption, and search edge cases.
-- Manual smoke-test checklist in `CONTRIBUTING.md`.
-
-### Changed
-- Build is now `python tools/build_addon.py` (Python stdlib only); SCons removed.
-- Test runner is `python tests/run.py` (Python stdlib only); pytest, ruff,
-  pyproject.toml, and requirements-dev.txt removed. The project now has
-  **zero third-party dependencies** at any stage (runtime, tests, build).
-- `identity.get_object_id` walks dotted attribute paths
-  (`appModule.appName`, `UIAAutomationId`) so the app component of an
-  object ID is actually populated in real NVDA.
-- `storage.load` quarantines unreadable or malformed JSON into
-  `<path>.corrupt-<timestamp>` and returns empty stores; the add-on
-  keeps running on a cold start.
-- Role announcements use `controlTypes.roleLabels` when available.
+_No unreleased changes yet._
 
 ## [0.1.0] — foundation
 
+Initial release: a working NVDA add-on with zero third-party
+dependencies at runtime, in tests, or at build time.
+
 ### Added
-- Pure-Python semantic-tree core (`tree`, `inheritance`, `labels`,
-  `identity`, `search`, `storage`) with 21 unit tests.
-- NVDA global plugin (`plugin.py`) with seven gestures:
-  four-way semantic navigation, label, assign, search.
-- wx dialogs for labelling, assigning a semantic parent, and
-  searching the tree item-chooser style.
-- Stdlib build script (`tools/build_addon.py`) that produces `semanticTree-0.1.0.nvda-addon`.
-- README, developer guide, and bundled in-NVDA help.
+
+- **Pure-Python core**, NVDA-free and fully unit-tested:
+  - `tree.py` — explicit `child → parent` assignments with cycle
+    detection and `explicit_descendants`.
+  - `inheritance.py` — effective parent / children that *preserve*
+    accessibility structure inside an assigned subtree. Assigning
+    `body` keeps `body > container > link > span` nested, not
+    flattened into `{container, link, span}` under `body`.
+  - `identity.py` — stable hashable IDs across sessions. Walks
+    dotted attribute paths (`appModule.appName`, `UIAAutomationId`);
+    typed helpers preserve `indexInParent=0` and `windowHandle=0`.
+  - `labels.py` — user-assigned display labels for objects with
+    poor automation names.
+  - `search.py` — facet matcher (`role:button firefox -notepad`).
+  - `storage.py` — atomic JSON save; corrupt files are quarantined
+    as `<path>.corrupt-<timestamp>` and the add-on recovers cleanly.
+  - `facets.py` — pure facet extraction split out of the wx UI so
+    it is unit-testable.
+
+- **NVDA integration layer**:
+  - `walker.py` — `AccessWalker` over live NVDAObjects with a
+    weakref cache, `prime_ancestors`, and a bounded deque-backed
+    `search_subtree` BFS so cold-cache lookups across a restart
+    still resolve.
+  - `navigator.py` — semantic cursor that re-anchors to NVDA's
+    current navigator on every gesture so intervening manual moves
+    are respected.
+  - `plugin.py` — `GlobalPlugin` with seven `@script` gestures.
+    Every script guards `api.getNavigatorObject()` returning
+    `None`. Every dialog open is try/except-wrapped for graceful
+    degradation on NVDA API drift. `_role_text` tries, in order:
+    `obj.roleText`, `role.displayString` (modern enum),
+    `controlTypes.roleLabels[role]` (legacy), `str(role)`.
+
+- **wx dialogs** (`ui/`):
+  - `label.py` — set or clear a custom label.
+  - `assign.py` — pick a semantic parent from a `wx.TreeCtrl`.
+    Hides the object being assigned *and its descendants* as
+    candidate parents so the user cannot create a cycle.
+  - `search.py` — live-filtered `wx.ListBox` item chooser.
+    Announces when a picked object has been evicted from cache
+    instead of closing silently.
+
+- **Gestures** (all rebindable from Input gestures → Semantic Tree):
+  - `NVDA+Ctrl+Shift+Up/Down/Left/Right` — four-way semantic
+    navigation (parent / first child / previous / next sibling).
+  - `NVDA+Ctrl+Shift+L` — label / relabel.
+  - `NVDA+Ctrl+Shift+A` — assign a semantic parent.
+  - `NVDA+Ctrl+Shift+F` — search.
+
+- **Build and CI**:
+  - `tools/build_addon.py` — stdlib-only script producing
+    `semanticTree-0.1.0.nvda-addon`.
+  - `tests/run.py` — stdlib-only test runner with filesystem
+    auto-discovery (52 tests).
+  - GitHub Actions workflow: matrix tests on Python
+    3.10 / 3.11 / 3.12 plus the build, on every push and PR.
+  - Release workflow: tagging `vX.Y.Z` verifies the manifest
+    version matches the tag, runs tests, builds, and publishes a
+    GitHub Release with the `.nvda-addon` attached.
+  - Dependabot for GitHub Actions updates.
+
+- **Docs**:
+  - `README.md` — user-facing overview, features, shortcuts.
+  - `docs/local_install.md` — detailed scratchpad and packaged-
+    install walkthrough for Windows/NVDA.
+  - `docs/developer_guide.md` — architecture and module-by-module
+    reference.
+  - `CONTRIBUTING.md` — dev setup, day-to-day commands, and a
+    seven-step manual smoke-test checklist.
+  - `SECURITY.md`, issue / PR templates.
+  - `addon/doc/en/readme.html` — bundled in-NVDA help, linked by
+    `manifest.ini`.
