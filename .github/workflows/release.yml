@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify manifest version matches tag
+        run: |
+          tag="${GITHUB_REF#refs/tags/v}"
+          manifest_version=$(grep -E '^version' manifest.ini | awk -F' = ' '{print $2}')
+          if [ "$tag" != "$manifest_version" ]; then
+            echo "Tag $tag does not match manifest version $manifest_version" >&2
+            exit 1
+          fi
+      - run: python tests/run.py
+      - run: python tools/build_addon.py --output-dir dist
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.nvda-addon
+          draft: false
+          generate_release_notes: true
