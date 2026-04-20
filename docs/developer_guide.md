@@ -46,8 +46,8 @@ docs/
   developer_guide.md
 tests/
   fakes.py             # FakeObject / FakeWalker for core tests
-  test_*.py            # pytest-style cases
-  run.py               # stdlib runner (no pytest dependency)
+  test_*.py            # stdlib test cases (plain `assert`)
+  run.py               # stdlib discoverer and runner
 manifest.ini           # NVDA manifest, read by NVDA at install time
 buildVars.py           # Add-on metadata consumed by tools/build_addon.py
 tools/
@@ -202,8 +202,8 @@ The usual shape is:
 
 ## Running and packaging
 
-* Tests: `python tests/run.py`. No external dependencies. Install
-  `pytest` if you want nicer output.
+* Tests: `python tests/run.py`. No external dependencies. The runner
+  auto-discovers any `test_*.py` in the `tests/` directory.
 * Build: `python tools/build_addon.py` at the repo root. Produces
   `semanticTree-0.1.0.nvda-addon`.
 * Install into NVDA: NVDA menu → Tools → Manage add-ons → Install.

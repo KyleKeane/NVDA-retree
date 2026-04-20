@@ -6,33 +6,34 @@ workflow. For *why* the code is shaped the way it is, read
 
 ## Setting up
 
-You only need Python 3.10+ to work on the core and run the tests; NVDA
-itself is only required to exercise the plugin end-to-end inside the
-screen reader.
+All you need is Python 3.10+. There are no third-party Python
+dependencies — not for tests, not for the build, not for the add-on
+at runtime. NVDA itself is only required to exercise the plugin
+end-to-end inside the screen reader.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate    # on Windows: .venv\Scripts\activate
-pip install -r requirements-dev.txt
+git clone https://github.com/kylekeane/nvda-retree.git
+cd nvda-retree
+python tests/run.py
 ```
+
+That should print `all N green`. If it does, you have everything you
+need to work on the project.
 
 ## Day-to-day commands
 
 | Task            | Command                                         |
 |-----------------|-------------------------------------------------|
-| Run tests       | `pytest`                                        |
-| Lint            | `ruff check .`                                  |
-| Format          | `ruff format .`                                 |
-| Build add-on    | `python tools/build_addon.py` *(stdlib only)*   |
-| Stdlib-only run | `python tests/run.py` *(no pytest needed)*      |
+| Run tests       | `python tests/run.py`                           |
+| Build add-on    | `python tools/build_addon.py`                   |
 
-The CI workflow runs lint + tests + build on every push and pull
-request; releases are published when a `vX.Y.Z` tag is pushed (see
-`.github/workflows/release.yml`).
+Both commands use only the Python standard library. CI runs exactly
+these two steps on every push and pull request. Releases are published
+when a `vX.Y.Z` tag is pushed (see `.github/workflows/release.yml`).
 
 ## Code style
 
-* Four-space tabs (the NVDA convention). `ruff format` enforces this.
+* Tabs for indentation (the NVDA convention). Match surrounding code.
 * Keep the pure-Python core (`tree.py`, `inheritance.py`, `labels.py`,
   `search.py`, `storage.py`, `identity.py`) free of NVDA imports.
   Tests depend on that.
@@ -40,6 +41,13 @@ request; releases are published when a `vX.Y.Z` tag is pushed (see
   more naturally.
 * Comments are for the *why* of something non-obvious. Let names and
   types carry the *what*.
+
+## Adding tests
+
+Drop a `test_*.py` file into `tests/`. Top-level functions named
+`test_*` will be discovered and run automatically. The
+`testing_helpers.raises` context manager (provided by the runner) is
+available if you need to assert that a block raises.
 
 ## Manual smoke test in NVDA
 

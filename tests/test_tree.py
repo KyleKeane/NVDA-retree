@@ -1,4 +1,4 @@
-import pytest
+from testing_helpers import raises
 
 from semanticTree.tree import CycleError, SemanticTree
 
@@ -31,13 +31,13 @@ def test_cycle_detection():
 	t = SemanticTree()
 	t.assign("a", None)
 	t.assign("b", "a")
-	with pytest.raises(CycleError):
+	with raises(CycleError):
 		t.assign("a", "b")
 
 
 def test_self_cycle():
 	t = SemanticTree()
-	with pytest.raises(CycleError):
+	with raises(CycleError):
 		t.assign("a", "a")
 
 

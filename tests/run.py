@@ -1,101 +1,109 @@
-"""Minimal test runner so contributors without pytest can still verify the
-pure-Python core:
+"""Test runner — stdlib only.
 
     python tests/run.py
 
-For richer output install pytest and run ``pytest tests/``.
+Discovers every ``test_*.py`` in this directory, imports it, and runs
+each top-level ``test_*`` function. A test passes if it does not raise.
+Failures print their traceback and the runner exits non-zero.
+
+Deliberately simple so it has no third-party dependencies. Good enough
+for a project this size; when the test count grows past the point where
+this is comfortable, migrate to ``unittest`` (also stdlib).
 """
 
+import importlib.util
 import os
 import sys
 import traceback
 
 
-def _setup_path():
-	root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-	sys.path.insert(0, os.path.join(root, "addon", "globalPlugins"))
-	sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-	sys.path.insert(0, root)
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(TESTS_DIR)
+
+
+def _setup_path() -> None:
+	sys.path.insert(0, os.path.join(REPO_ROOT, "addon", "globalPlugins"))
+	sys.path.insert(0, TESTS_DIR)
+	sys.path.insert(0, REPO_ROOT)
 	import builtins
 	if not hasattr(builtins, "_"):
 		builtins._ = lambda s: s  # type: ignore[attr-defined]
-	# Shim pytest if it isn't installed so the tests are still runnable.
-	try:
-		import pytest  # noqa: F401
-	except ImportError:
-		import types
-		from contextlib import contextmanager
-		stub = types.ModuleType("pytest")
-
-		@contextmanager
-		def raises(exc_type):
-			try:
-				yield
-			except exc_type:
-				return
-			raise AssertionError(f"Did not raise {exc_type.__name__}")
-
-		stub.raises = raises
-		sys.modules["pytest"] = stub
 
 
-def _collect():
-	import test_identity
-	import test_inheritance
-	import test_labels
-	import test_navigator
-	import test_search
-	import test_storage
-	import test_tree
+def _install_test_helpers() -> None:
+	"""Expose a tiny ``testing_helpers`` module so tests can write
+	``with raises(SomeError):`` without a third-party dependency."""
+	import types
+	from contextlib import contextmanager
 
-	modules = (
-		test_tree,
-		test_labels,
-		test_inheritance,
-		test_search,
-		test_storage,
-		test_identity,
-		test_navigator,
+	helpers = types.ModuleType("testing_helpers")
+
+	@contextmanager
+	def raises(exc_type):
+		try:
+			yield
+		except exc_type:
+			return
+		raise AssertionError(f"Did not raise {exc_type.__name__}")
+
+	helpers.raises = raises
+	sys.modules["testing_helpers"] = helpers
+
+
+def _discover_modules() -> list:
+	names = sorted(
+		f[:-3] for f in os.listdir(TESTS_DIR)
+		if f.startswith("test_") and f.endswith(".py")
 	)
+	modules = []
+	for name in names:
+		spec = importlib.util.spec_from_file_location(name, os.path.join(TESTS_DIR, f"{name}.py"))
+		if spec is None or spec.loader is None:
+			continue
+		module = importlib.util.module_from_spec(spec)
+		sys.modules[name] = module
+		spec.loader.exec_module(module)
+		modules.append(module)
+	return modules
+
+
+def _collect() -> list:
 	cases = []
-	for module in modules:
-		for name in dir(module):
-			if name.startswith("test_"):
-				cases.append((f"{module.__name__}.{name}", getattr(module, name)))
+	for module in _discover_modules():
+		for name in sorted(dir(module)):
+			if not name.startswith("test_"):
+				continue
+			fn = getattr(module, name)
+			if callable(fn):
+				cases.append((f"{module.__name__}.{name}", fn))
 	return cases
 
 
-def _fake_tmp_path():
-	import tempfile
-	return tempfile.mkdtemp(prefix="semtree_")
-
-
-def _run_one(name, fn):
+def _run_one(case_name: str, fn) -> bool:
 	try:
-		arg_names = fn.__code__.co_varnames[: fn.__code__.co_argcount]
-		if "tmp_path" in arg_names:
-			fn(_fake_tmp_path())
-		else:
-			fn()
+		fn()
 	except Exception:
-		print(f"FAIL  {name}")
+		print(f"FAIL  {case_name}")
 		traceback.print_exc()
 		return False
-	print(f"ok    {name}")
+	print(f"ok    {case_name}")
 	return True
 
 
 def main() -> int:
 	_setup_path()
+	_install_test_helpers()
 	failed = 0
-	for name, fn in _collect():
-		if not _run_one(name, fn):
+	total = 0
+	for case_name, fn in _collect():
+		total += 1
+		if not _run_one(case_name, fn):
 			failed += 1
 	print()
 	if failed:
-		print(f"{failed} failure(s)")
+		print(f"{failed} of {total} failed")
 		return 1
-	print("all green")
+	print(f"all {total} green")
 	return 0
 
 

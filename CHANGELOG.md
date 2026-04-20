@@ -7,31 +7,32 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Continuous integration (lint, multi-version pytest, build) on every push and PR.
+- Continuous integration (multi-version tests + build) on every push and PR.
 - Release workflow: tagging `vX.Y.Z` publishes a GitHub release with the `.nvda-addon` attached.
-- `pyproject.toml` with ruff + pytest configuration.
 - Issue and pull-request templates; Dependabot configuration; `SECURITY.md`; `CONTRIBUTING.md`.
+- `NVDAWalker.prime_ancestors` and `search_subtree`: populate the
+  weakref cache up the ancestor chain and, on resolution miss, do a
+  bounded BFS from the window root. `SemanticNavigator` uses the
+  latter as its fallback when an explicit assignment points at an
+  object not in cache.
+- Every script guards against `api.getNavigatorObject()` returning
+  `None` and announces a clear message instead of erroring.
+- Test suite grew to **39 cases** covering identity, navigator,
+  storage-corruption, and search edge cases.
+- Manual smoke-test checklist in `CONTRIBUTING.md`.
 
 ### Changed
 - Build is now `python tools/build_addon.py` (Python stdlib only); SCons removed.
-- `identity.get_object_id` now walks dotted attribute paths
+- Test runner is `python tests/run.py` (Python stdlib only); pytest, ruff,
+  pyproject.toml, and requirements-dev.txt removed. The project now has
+  **zero third-party dependencies** at any stage (runtime, tests, build).
+- `identity.get_object_id` walks dotted attribute paths
   (`appModule.appName`, `UIAAutomationId`) so the app component of an
   object ID is actually populated in real NVDA.
 - `storage.load` quarantines unreadable or malformed JSON into
   `<path>.corrupt-<timestamp>` and returns empty stores; the add-on
   keeps running on a cold start.
 - Role announcements use `controlTypes.roleLabels` when available.
-
-### Added
-- `NVDAWalker.prime_ancestors` and `search_subtree`: populate the
-  weakref cache up the ancestor chain and, on resolution miss, do a
-  bounded BFS from the window root. `SemanticNavigator` uses the
-  latter as its fallback when an explicit assignment points at an
-  object not in cache.
-- All scripts guard against `api.getNavigatorObject()` returning
-  `None` and announce a clear message instead of erroring.
-- Test suite grew to 36 cases covering identity, navigator,
-  storage-corruption, and search edge cases.
 
 ## [0.1.0] — foundation
 

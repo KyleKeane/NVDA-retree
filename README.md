@@ -126,8 +126,7 @@ python tests/run.py
 ```
 
 The pure-Python core (tree, inheritance, labels, storage, search) runs
-without NVDA and is fully covered. If `pytest` is installed, you can
-use `pytest tests/` too; the tests are written in that style.
+without NVDA and is fully covered.
 
 ## License
 
