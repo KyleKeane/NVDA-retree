@@ -107,17 +107,36 @@ The semantic tree is *not* a copy. It stores only the arrows the user
 has drawn. Everything else is answered at lookup time by walking the
 real accessibility tree and consulting those arrows.
 
-## Installation (developers)
+## Installation
 
-1. From the repo root: `python tools/build_addon.py`. This produces
-   `semanticTree-0.1.0.nvda-addon` using only the Python standard
-   library — no SCons, no third-party build tooling.
-2. Open NVDA → **Tools → Manage add-ons → Install** and point it at the
-   `.nvda-addon` file.
+**Full step-by-step instructions are in
+[`docs/local_install.md`](docs/local_install.md).** Short version:
 
-Or, for day-to-day development, symlink
-`addon/globalPlugins/semanticTree` into your NVDA user `globalPlugins`
-directory and restart NVDA.
+### For day-to-day development (recommended while the project is pre-1.0)
+
+Use NVDA's **Developer Scratchpad**. Enable it under NVDA &rarr;
+Preferences &rarr; Settings &rarr; Advanced, then point a directory
+junction at your checkout:
+
+```cmd
+mklink /J "%APPDATA%\nvda\scratchpad\globalPlugins\semanticTree" "<path-to-your-clone>\addon\globalPlugins\semanticTree"
+```
+
+Press **NVDA+Ctrl+F3** to (re)load plugins. No build, no restart
+needed for most edits.
+
+### To test the packaged experience
+
+```powershell
+py -3 tools\build_addon.py
+```
+
+Then in NVDA: **Tools &rarr; Add-on store &rarr; Install from
+external source** and point it at `semanticTree-0.1.0.nvda-addon`.
+Restart when prompted.
+
+Either path produces the same running add-on; the scratchpad just
+lets you reload after edits without rebuilding.
 
 ## Running the tests
 

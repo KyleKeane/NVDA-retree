@@ -55,19 +55,19 @@ def facets_for(oid, tree: SemanticTree, labels: LabelStore, walker) -> Mapping[s
 	name = getattr(obj, "name", "") if obj is not None else ""
 	label = labels.get(oid) or name or str(oid)
 	path_parts: list[str] = []
-	current = oid
+	current = tree.parent_of(oid)
 	while current is not None:
+		ancestor_label = labels.get(current)
+		if ancestor_label:
+			path_parts.append(ancestor_label)
 		current = tree.parent_of(current)
-		if current is None:
-			break
-		path_parts.append(labels.get(current) or "")
 	path_parts.reverse()
 	return {
 		"id": oid,
 		"label": label,
 		"role": role_text(obj),
 		"app": app_name(obj),
-		"path": " > ".join(part for part in path_parts if part),
+		"path": " > ".join(path_parts),
 	}
 
 
