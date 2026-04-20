@@ -57,6 +57,24 @@ class SemanticTree:
 	def assigned_ids(self) -> Iterable[ObjectId]:
 		return self._parent.keys()
 
+	def explicit_descendants(self, root_id: ObjectId) -> set:
+		"""All IDs currently explicitly parented under ``root_id`` (transitively).
+
+		Does not include ``root_id`` itself. Breaks cycles defensively
+		(the tree shouldn't contain any, but a hand-edited state file
+		might).
+		"""
+		result: set = set()
+		stack = [root_id]
+		while stack:
+			current = stack.pop()
+			for child in self.explicit_children(current):
+				if child in result:
+					continue
+				result.add(child)
+				stack.append(child)
+		return result
+
 	def ancestors(self, child_id: ObjectId) -> Iterator[ObjectId]:
 		seen: set = set()
 		current = self._parent.get(child_id)

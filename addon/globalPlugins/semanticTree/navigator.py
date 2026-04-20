@@ -58,15 +58,17 @@ class SemanticNavigator:
 		cid = self._walker.id_of(self._current)
 		if cid is None:
 			return None
-		if not self._tree.is_assigned(cid):
-			# If the current node is not itself assigned, its semantic
-			# children (inherited) are just its accessibility children.
-			for child in self._walker.children_of(self._current):
-				self.focus(child)
-				return child
-			return None
-		children_ids = effective_children(cid, self._tree, self._walker)
-		return self._focus_by_id(children_ids[0]) if children_ids else None
+		# The current object is a valid parent in effective_children as
+		# long as it is itself in the semantic tree. If it is a stray
+		# unassigned node outside the tree, fall back to its direct
+		# accessibility children.
+		if self._tree.is_assigned(cid) or effective_parent(self._current, self._tree, self._walker) is not None:
+			children_ids = effective_children(cid, self._tree, self._walker)
+			return self._focus_by_id(children_ids[0]) if children_ids else None
+		for child in self._walker.children_of(self._current):
+			self.focus(child)
+			return child
+		return None
 
 	def to_next_sibling(self) -> Any | None:
 		return self._sibling_move(offset=+1)

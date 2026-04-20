@@ -70,17 +70,24 @@ That's all. No children list, no ordering, no metadata.
 
 ### `effective_parent` / `effective_children` (inheritance.py)
 
-The inheritance rule is one sentence:
+The inheritance rule in two sentences:
 
-> The effective parent of *X* is its explicit parent if any, else the
-> nearest ancestor in the accessibility tree that has an explicit
-> parent, else none.
+> An object is *in the semantic tree* if it is explicitly assigned, or
+> if its accessibility parent is in the semantic tree (recursively).
+> Its effective parent is its explicit parent (if assigned) or its
+> direct accessibility parent (otherwise).
 
-`effective_parent` implements exactly that walk. `effective_children`
-inverts it: the explicit children first (in insertion order), then a
-recursive walk over the accessibility-tree descendants of the parent,
-cutting off at any subtree whose root has been explicitly reassigned
-elsewhere (so it does not double-count).
+Crucially, this preserves the accessibility structure *inside* an
+assigned subtree: if you assign `body`, and `body` has
+`container > link > span` in its accessibility tree, the semantic tree
+sees the same nesting — not a flat list of `{container, link, span}`
+under `body`.
+
+`effective_children` for an assigned parent P returns:
+
+1. The objects explicitly parented under P (insertion order), then
+2. P's direct accessibility children that are not themselves
+   explicitly assigned somewhere.
 
 This is where inheritance "for any subsequent children objects" comes
 from: when the user discovers a new element in an app later, it's an

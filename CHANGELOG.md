@@ -6,6 +6,36 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (pre-release audit round)
+- `identity.get_object_id` no longer collapses `indexInParent=0` (first child)
+  or `windowHandle=0` into the missing-value sentinel. Typed helpers
+  (`_str_of`, `_int_of`) preserve zero and negative values.
+- Semantic navigation now re-anchors to NVDA's current navigator object
+  on every press, so moving the NVDA navigator with other gestures in
+  between ours is no longer ignored.
+- The search dialog's **app** facet now reads `obj.appModule.appName`
+  (was reading a non-existent `obj.appModuleName` and always returning `""`).
+- `inheritance` rewritten so accessibility structure is preserved
+  *inside* an assigned subtree. Previously `body > container > link`
+  flattened to `body > {container, link}`; now it stays nested.
+  `_inherited_descendants` recursion is gone (no recursion-limit risk).
+- NVDA's in-add-on help button opens correctly: we now ship a real
+  `readme.html` (manifest pointed at `.html` but we were shipping `.md`).
+- Assign dialog hides the object being assigned *and its descendants*
+  as candidate parents; previously picking a descendant failed with a
+  CycleError at commit time.
+- `NVDAWalker.search_subtree` uses `collections.deque` for O(1) BFS
+  pops (was `list.pop(0)` — O(n²) over 500 nodes).
+
+### Added
+- `SemanticTree.explicit_descendants(root_id)` — tree operation used
+  by the assign dialog.
+- `facets.py` — pure facet extraction split out of the wx-dependent
+  search dialog so it is unit-testable.
+- 12 more tests: identity edge cases (zero index, zero handle,
+  missing attributes), structure-preserving inheritance, facet
+  extraction, tree descendants. Total: **51 tests**.
+
 ### Added
 - Continuous integration (multi-version tests + build) on every push and PR.
 - Release workflow: tagging `vX.Y.Z` publishes a GitHub release with the `.nvda-addon` attached.

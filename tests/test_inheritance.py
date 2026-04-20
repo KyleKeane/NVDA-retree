@@ -58,3 +58,40 @@ def test_explicit_subtree_not_double_counted():
 	assert walker.id_of(back_btn) in toolbar_kids
 	body_kids = effective_children(walker.id_of(body), tree, walker)
 	assert walker.id_of(reload_btn) in body_kids
+
+
+def _nested_world():
+	"""body > container > link > span. Only ``body`` is assigned."""
+	root = FakeObject("root", "window")
+	body = root.add(FakeObject("body", "pane"))
+	container = body.add(FakeObject("container", "section"))
+	link = container.add(FakeObject("link", "link"))
+	span = link.add(FakeObject("span", "text"))
+	walker = FakeWalker()
+	walker.register(root)
+	tree = SemanticTree()
+	tree.assign(walker.id_of(body), None)
+	return body, container, link, span, tree, walker
+
+
+def test_nested_structure_is_preserved_not_flattened():
+	"""Assigning ``body`` must not collapse its descendants into a flat
+	list of direct children; ``container > link > span`` keeps its shape."""
+	body, container, link, span, tree, walker = _nested_world()
+
+	assert effective_children(walker.id_of(body), tree, walker) == [walker.id_of(container)]
+	assert effective_children(walker.id_of(container), tree, walker) == [walker.id_of(link)]
+	assert effective_children(walker.id_of(link), tree, walker) == [walker.id_of(span)]
+
+	assert effective_parent(container, tree, walker) == walker.id_of(body)
+	assert effective_parent(link, tree, walker) == walker.id_of(container)
+	assert effective_parent(span, tree, walker) == walker.id_of(link)
+
+
+def test_objects_outside_semantic_tree_have_no_effective_parent():
+	root = FakeObject("root", "window")
+	stray = root.add(FakeObject("stray", "pane"))
+	walker = FakeWalker()
+	walker.register(root)
+	tree = SemanticTree()  # nothing assigned
+	assert effective_parent(stray, tree, walker) is None

@@ -90,16 +90,20 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			return None
 
 	def _anchor_to_navigator(self) -> bool:
-		if self._nav.current is not None:
-			return True
+		"""Re-sync the semantic cursor to NVDA's current navigator on every
+		press. Essential: the user may have moved NVDA's navigator via
+		other gestures in between ours, and we want semantic moves to
+		always start from where the user actually is."""
 		obj = self._current_navigator()
 		if obj is None:
 			ui.message(_("No navigator object"))
 			return False
-		self._nav.focus(obj)
-		# Prime the walker cache with the ancestor chain so up-moves and
-		# sibling moves can resolve IDs even before we've traversed them.
-		self._walker.prime_ancestors(obj)
+		if self._nav.current is not obj:
+			self._nav.focus(obj)
+			# Prime the walker cache with the ancestor chain so up-moves
+			# and sibling moves can resolve IDs even before we've
+			# traversed them.
+			self._walker.prime_ancestors(obj)
 		return True
 
 	@script(

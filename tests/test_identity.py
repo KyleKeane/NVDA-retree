@@ -46,3 +46,28 @@ def test_missing_automation_id_tolerated():
 def test_pulls_automation_id_when_present():
 	obj = FakeObject("X", automation_id="pay-button")
 	assert get_object_id(obj)[5] == "pay-button"
+
+
+def test_first_child_index_preserved():
+	"""Regression: int(0 or -1) collapsed the first-child index to -1,
+	colliding with the missing-attribute sentinel. Every first child
+	looked identical to every other first child."""
+	parent = FakeObject("P")
+	first = parent.add(FakeObject("A"))
+	second = parent.add(FakeObject("B"))
+	assert first.indexInParent == 0
+	assert second.indexInParent == 1
+	assert get_object_id(first)[6] == 0
+	assert get_object_id(second)[6] == 1
+
+
+def test_window_handle_zero_preserved():
+	obj = FakeObject("X")
+	obj.windowHandle = 0
+	assert get_object_id(obj)[1] == 0
+
+
+def test_missing_index_uses_sentinel():
+	obj = FakeObject("X")
+	del obj.indexInParent
+	assert get_object_id(obj)[6] == -1

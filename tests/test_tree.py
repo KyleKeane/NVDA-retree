@@ -41,6 +41,17 @@ def test_self_cycle():
 		t.assign("a", "a")
 
 
+def test_explicit_descendants():
+	t = SemanticTree()
+	t.assign("root", None)
+	t.assign("child1", "root")
+	t.assign("child2", "root")
+	t.assign("grandchild", "child1")
+	assert t.explicit_descendants("root") == {"child1", "child2", "grandchild"}
+	assert t.explicit_descendants("child1") == {"grandchild"}
+	assert t.explicit_descendants("grandchild") == set()
+
+
 def test_round_trip_serialisation():
 	t = SemanticTree()
 	t.assign(("app", 1, "root", ""), None)

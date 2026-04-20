@@ -1,8 +1,10 @@
 """Dialog: pick a semantic parent for the given child.
 
 Shows the current semantic tree as a wx.TreeCtrl of already-assigned
-objects plus a synthetic "(root)" entry. Arrow keys walk the tree.
-Enter confirms; Delete unassigns (makes it a root).
+objects plus a synthetic "(top level)" entry. Arrow keys walk the
+tree. Enter confirms, Escape cancels. The object being assigned and
+its current descendants are hidden as candidate parents to prevent
+cycles.
 """
 
 from collections.abc import Callable
@@ -57,6 +59,7 @@ class _AssignDialog(wx.Dialog):
 		self._labels = labels
 		self._walker = walker
 		self._id_for_item: dict[wx.TreeItemId, ObjectId | None] = {}
+		self._excluded = tree.explicit_descendants(child_id) | {child_id}
 
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(self, label=_("Choose a semantic parent:")), flag=wx.ALL, border=8)
@@ -79,8 +82,10 @@ class _AssignDialog(wx.Dialog):
 
 	def _add_children(self, parent_item: wx.TreeItemId, parent_id: ObjectId | None) -> None:
 		for cid in self._tree.explicit_children(parent_id):
-			if cid == self._child_id:
-				# Don't let the user reparent under itself or its descendants.
+			if cid in self._excluded:
+				# Hide the object being assigned and its descendants to
+				# prevent the user from picking a parent that would
+				# create a cycle.
 				continue
 			item = self._tree_ctrl.AppendItem(parent_item, _describe(cid, self._labels, self._walker))
 			self._id_for_item[item] = cid

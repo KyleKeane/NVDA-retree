@@ -10,39 +10,11 @@ from collections.abc import Callable, Mapping
 import gui  # type: ignore
 import wx  # type: ignore
 
+from ..facets import build_items
 from ..labels import LabelStore
-from ..search import filter_items, sort_items
+from ..search import filter_items
 from ..tree import SemanticTree
 from ..walker import NVDAWalker
-
-
-def _facets_for(oid, tree: SemanticTree, labels: LabelStore, walker: NVDAWalker) -> Mapping[str, object]:
-	obj = walker.object_for_id(oid)
-	name = getattr(obj, "name", "") if obj is not None else ""
-	role = getattr(obj, "roleText", None) if obj is not None else None
-	if role is None and obj is not None:
-		role = str(getattr(obj, "role", "") or "")
-	app = getattr(obj, "appModuleName", "") if obj is not None else ""
-	label = labels.get(oid) or name or str(oid)
-	path_parts: list[str] = []
-	current = oid
-	while current is not None:
-		current = tree.parent_of(current)
-		if current is None:
-			break
-		path_parts.append(labels.get(current) or "")
-	path_parts.reverse()
-	return {
-		"id": oid,
-		"label": label,
-		"role": role or "",
-		"app": app or "",
-		"path": " > ".join(part for part in path_parts if part),
-	}
-
-
-def build_items(tree: SemanticTree, labels: LabelStore, walker: NVDAWalker):
-	return sort_items([_facets_for(oid, tree, labels, walker) for oid in tree.assigned_ids()])
 
 
 def open_search_dialog(

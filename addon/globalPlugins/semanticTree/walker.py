@@ -18,6 +18,7 @@ cache of objects we have seen recently. Callers should:
 """
 
 import weakref
+from collections import deque
 from collections.abc import Iterable
 from typing import Any
 
@@ -105,10 +106,10 @@ class NVDAWalker:
 		"""
 		if root is None or target_id is None:
 			return None
-		queue: list[tuple[Any, int]] = [(root, 0)]
+		queue: deque[tuple[Any, int]] = deque([(root, 0)])
 		visited = 0
 		while queue and visited < max_nodes:
-			obj, depth = queue.pop(0)
+			obj, depth = queue.popleft()
 			visited += 1
 			oid = self.id_of(obj)
 			if oid == target_id:
