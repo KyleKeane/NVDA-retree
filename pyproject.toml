@@ -7,8 +7,9 @@ license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [{ name = "Kyle Keane", email = "kkeane@mit.edu" }]
 
-# The real add-on is packaged by SCons into a .nvda-addon zip; this
-# pyproject exists for linting, testing, and IDE tooling only.
+# The real add-on is packaged by ``python tools/build_addon.py`` into a
+# .nvda-addon zip; this pyproject exists for linting, testing, and IDE
+# tooling only.
 
 [tool.ruff]
 line-length = 100

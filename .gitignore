@@ -5,11 +5,7 @@ __pycache__/
 
 # Built add-on packages
 *.nvda-addon
-
-# SCons state
-.sconsign.dblite
-.sconf_temp/
-config.log
+/dist/
 
 # C extensions
 *.so

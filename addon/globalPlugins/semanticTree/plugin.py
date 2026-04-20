@@ -12,25 +12,42 @@ it top-to-bottom and see what every shortcut does.
 
 import os
 
+import api  # type: ignore
 import globalPluginHandler  # type: ignore
 import globalVars  # type: ignore
 import ui  # type: ignore
-import api  # type: ignore
 from scriptHandler import script  # type: ignore
 
 from . import storage
 from .labels import LabelStore
 from .navigator import SemanticNavigator, sync_nvda_navigator
-from .tree import SemanticTree
 from .walker import NVDAWalker
 
 
 def _data_path() -> str:
-	base = getattr(globalVars, "appArgs", None)
-	config_dir = getattr(base, "configPath", None) if base else None
+	config_dir = getattr(getattr(globalVars, "appArgs", None), "configPath", None)
 	if not config_dir:
 		config_dir = os.path.expanduser("~/.nvda")
 	return os.path.join(config_dir, "semanticTree.json")
+
+
+def _role_text(obj) -> str:
+	role = getattr(obj, "role", None)
+	if role is None:
+		return ""
+	try:
+		import controlTypes  # type: ignore
+	except ImportError:
+		return str(role)
+	role_labels = getattr(controlTypes, "roleLabels", None)
+	if role_labels is not None:
+		try:
+			text = role_labels.get(role)
+		except Exception:
+			text = None
+		if text:
+			return str(text)
+	return str(role)
 
 
 def describe(obj, labels: LabelStore, walker: NVDAWalker) -> str:
@@ -41,8 +58,9 @@ def describe(obj, labels: LabelStore, walker: NVDAWalker) -> str:
 	if custom:
 		return custom
 	name = getattr(obj, "name", None) or ""
-	role = getattr(obj, "roleText", None) or str(getattr(obj, "role", "") or "")
-	return f"{name} {role}".strip() or _("unnamed object")
+	role = _role_text(obj)
+	text = f"{name} {role}".strip()
+	return text or _("unnamed object")
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
@@ -65,16 +83,32 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		ui.message(describe(obj, self._labels, self._walker))
 		sync_nvda_navigator(obj)
 
-	def _anchor_to_navigator(self) -> None:
-		if self._nav.current is None:
-			self._nav.focus(api.getNavigatorObject())
+	def _current_navigator(self):
+		try:
+			return api.getNavigatorObject()
+		except Exception:
+			return None
+
+	def _anchor_to_navigator(self) -> bool:
+		if self._nav.current is not None:
+			return True
+		obj = self._current_navigator()
+		if obj is None:
+			ui.message(_("No navigator object"))
+			return False
+		self._nav.focus(obj)
+		# Prime the walker cache with the ancestor chain so up-moves and
+		# sibling moves can resolve IDs even before we've traversed them.
+		self._walker.prime_ancestors(obj)
+		return True
 
 	@script(
 		description=_("Move to the semantic parent of the current navigator object."),
 		gesture="kb:NVDA+control+shift+upArrow",
 	)
 	def script_semantic_parent(self, gesture) -> None:
-		self._anchor_to_navigator()
+		if not self._anchor_to_navigator():
+			return
 		new_obj = self._nav.to_parent()
 		if new_obj is None:
 			ui.message(_("No semantic parent"))
@@ -86,7 +120,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		gesture="kb:NVDA+control+shift+downArrow",
 	)
 	def script_semantic_first_child(self, gesture) -> None:
-		self._anchor_to_navigator()
+		if not self._anchor_to_navigator():
+			return
 		new_obj = self._nav.to_first_child()
 		if new_obj is None:
 			ui.message(_("No semantic children"))
@@ -98,7 +133,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		gesture="kb:NVDA+control+shift+leftArrow",
 	)
 	def script_semantic_previous(self, gesture) -> None:
-		self._anchor_to_navigator()
+		if not self._anchor_to_navigator():
+			return
 		new_obj = self._nav.to_previous_sibling()
 		if new_obj is None:
 			ui.message(_("No previous semantic sibling"))
@@ -110,7 +146,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		gesture="kb:NVDA+control+shift+rightArrow",
 	)
 	def script_semantic_next(self, gesture) -> None:
-		self._anchor_to_navigator()
+		if not self._anchor_to_navigator():
+			return
 		new_obj = self._nav.to_next_sibling()
 		if new_obj is None:
 			ui.message(_("No next semantic sibling"))
@@ -123,7 +160,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	)
 	def script_set_label(self, gesture) -> None:
 		from .ui.label import open_label_dialog
-		obj = api.getNavigatorObject()
+		obj = self._current_navigator()
+		if obj is None:
+			ui.message(_("No navigator object"))
+			return
 		oid = self._walker.id_of(obj)
 		if oid is None:
 			ui.message(_("Cannot label this object"))
@@ -142,12 +182,16 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	)
 	def script_assign(self, gesture) -> None:
 		from .ui.assign import open_assign_dialog
-		obj = api.getNavigatorObject()
+		obj = self._current_navigator()
+		if obj is None:
+			ui.message(_("No navigator object"))
+			return
 		oid = self._walker.id_of(obj)
 		if oid is None:
 			ui.message(_("Cannot assign this object"))
 			return
 		self._walker.remember(obj)
+		self._walker.prime_ancestors(obj)
 		open_assign_dialog(
 			child_id=oid,
 			tree=self._tree,
@@ -171,6 +215,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	)
 	def script_search(self, gesture) -> None:
 		from .ui.search import open_search_dialog
+		anchor = self._current_navigator()
+		if anchor is not None:
+			self._walker.prime_ancestors(anchor)
 		open_search_dialog(
 			tree=self._tree,
 			labels=self._labels,

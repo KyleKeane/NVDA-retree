@@ -27,10 +27,10 @@ jobs:
             exit 1
           fi
       - run: pytest
-      - run: scons
+      - run: python tools/build_addon.py --output-dir dist
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: "*.nvda-addon"
+          files: dist/*.nvda-addon
           draft: false
           generate_release_notes: true

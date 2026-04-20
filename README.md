@@ -109,11 +109,10 @@ real accessibility tree and consulting those arrows.
 
 ## Installation (developers)
 
-1. Install [SCons](https://scons.org/) in the Python environment NVDA's
-   add-on template expects (see `docs/developer_guide.md`).
-2. From the repo root: `scons`. This produces
-   `semanticTree-0.1.0.nvda-addon`.
-3. Open NVDA → **Tools → Manage add-ons → Install** and point it at the
+1. From the repo root: `python tools/build_addon.py`. This produces
+   `semanticTree-0.1.0.nvda-addon` using only the Python standard
+   library — no SCons, no third-party build tooling.
+2. Open NVDA → **Tools → Manage add-ons → Install** and point it at the
    `.nvda-addon` file.
 
 Or, for day-to-day development, symlink

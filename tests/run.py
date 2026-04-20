@@ -40,13 +40,25 @@ def _setup_path():
 
 
 def _collect():
-	import test_tree
-	import test_labels
+	import test_identity
 	import test_inheritance
+	import test_labels
+	import test_navigator
 	import test_search
 	import test_storage
+	import test_tree
+
+	modules = (
+		test_tree,
+		test_labels,
+		test_inheritance,
+		test_search,
+		test_storage,
+		test_identity,
+		test_navigator,
+	)
 	cases = []
-	for module in (test_tree, test_labels, test_inheritance, test_search, test_storage):
+	for module in modules:
 		for name in dir(module):
 			if name.startswith("test_"):
 				cases.append((f"{module.__name__}.{name}", getattr(module, name)))

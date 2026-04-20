@@ -95,9 +95,32 @@ class SemanticNavigator:
 	def _focus_by_id(self, oid: ObjectId) -> Any | None:
 		obj = self._walker.object_for_id(oid)
 		if obj is None:
+			obj = self._resolve_via_search(oid)
+		if obj is None:
 			return None
 		self.focus(obj)
 		return obj
+
+	def _resolve_via_search(self, oid: ObjectId) -> Any | None:
+		"""Best-effort fallback when the cache has lost the live object.
+
+		Walks up from the current anchor to the foreground window and
+		searches a bounded subtree under it. Covers the common case of a
+		persisted assignment whose object existed at save time but has
+		not been seen live in this session.
+		"""
+		anchor = self._current
+		if anchor is None:
+			return None
+		root = anchor
+		steps = 0
+		while steps < 50:
+			parent = self._walker.parent_of(root)
+			if parent is None:
+				break
+			root = parent
+			steps += 1
+		return self._walker.search_subtree(root, oid)
 
 
 def sync_nvda_navigator(obj: Any) -> None:

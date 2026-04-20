@@ -4,13 +4,17 @@ This is the only module that talks to real NVDAObjects inside the core
 logic. UI and gesture handling also import NVDA modules, but the core
 algorithms go through this walker so that they remain testable.
 
-``object_for_id`` is inherently best-effort: NVDA does not expose a way to
-look up an arbitrary object from an opaque ID. We keep a weak cache of
-objects we have seen recently (usually the current focus and its
-ancestors), and fall back to ``None`` if we cannot resolve an ID. Semantic
-navigation is always driven from an anchor object (the current navigator)
-whose accessibility tree we walk directly, so the cache only needs to
-resolve IDs on that live path.
+Object identity resolution
+--------------------------
+``object_for_id`` is inherently best-effort: NVDA does not expose a way
+to look up an arbitrary object from an opaque ID. We keep a weakref
+cache of objects we have seen recently. Callers should:
+
+* Call :meth:`prime_ancestors` when anchoring to a new navigator object
+  so that up-moves from it can resolve IDs.
+* Call :meth:`search_subtree` before giving up on an unresolved ID; it
+  walks a bounded portion of the live accessibility tree looking for a
+  match and populates the cache as it goes.
 """
 
 import weakref
@@ -19,6 +23,11 @@ from typing import Any
 
 from .identity import get_object_id
 from .tree import ObjectId
+
+
+_PRIME_ANCESTORS_LIMIT = 50
+_SEARCH_DEFAULT_MAX_DEPTH = 4
+_SEARCH_DEFAULT_MAX_NODES = 500
 
 
 class NVDAWalker:
@@ -70,3 +79,42 @@ class NVDAWalker:
 		if obj is None:
 			self._cache.pop(object_id, None)
 		return obj
+
+	def prime_ancestors(self, obj: Any, limit: int = _PRIME_ANCESTORS_LIMIT) -> None:
+		"""Populate the cache with the ancestor chain of ``obj``."""
+		current = obj
+		steps = 0
+		while current is not None and steps < limit:
+			self.remember(current)
+			current = getattr(current, "parent", None)
+			steps += 1
+
+	def search_subtree(
+		self,
+		root: Any,
+		target_id: ObjectId,
+		max_depth: int = _SEARCH_DEFAULT_MAX_DEPTH,
+		max_nodes: int = _SEARCH_DEFAULT_MAX_NODES,
+	) -> Any | None:
+		"""Breadth-first search under ``root`` for an object with ``target_id``.
+
+		Bounded by depth and node count so we never stall NVDA on a huge
+		tree. Populates the cache as it goes, so subsequent lookups are
+		free. Returns ``None`` if the target is not reached within the
+		budget.
+		"""
+		if root is None or target_id is None:
+			return None
+		queue: list[tuple[Any, int]] = [(root, 0)]
+		visited = 0
+		while queue and visited < max_nodes:
+			obj, depth = queue.pop(0)
+			visited += 1
+			oid = self.id_of(obj)
+			if oid == target_id:
+				return obj
+			if depth >= max_depth:
+				continue
+			for child in getattr(obj, "children", None) or ():
+				queue.append((child, depth + 1))
+		return None

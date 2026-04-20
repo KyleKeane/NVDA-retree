@@ -48,9 +48,10 @@ tests/
   fakes.py             # FakeObject / FakeWalker for core tests
   test_*.py            # pytest-style cases
   run.py               # stdlib runner (no pytest dependency)
-manifest.ini           # NVDA manifest (used by SCons and by NVDA)
-buildVars.py           # SCons build variables
-sconstruct             # SCons build (produces .nvda-addon)
+manifest.ini           # NVDA manifest, read by NVDA at install time
+buildVars.py           # Add-on metadata consumed by tools/build_addon.py
+tools/
+  build_addon.py       # Stdlib-only script producing the .nvda-addon
 ```
 
 ## The data model
@@ -203,7 +204,7 @@ The usual shape is:
 
 * Tests: `python tests/run.py`. No external dependencies. Install
   `pytest` if you want nicer output.
-* Build: `scons` at the repo root. Produces
+* Build: `python tools/build_addon.py` at the repo root. Produces
   `semanticTree-0.1.0.nvda-addon`.
 * Install into NVDA: NVDA menu → Tools → Manage add-ons → Install.
 

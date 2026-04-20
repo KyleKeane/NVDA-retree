@@ -1,3 +1,4 @@
+import glob
 import os
 
 from semanticTree import storage
@@ -22,3 +23,24 @@ def test_load_missing_returns_empty(tmp_path):
 	tree, labels = storage.load(os.path.join(str(tmp_path), "nope.json"))
 	assert list(tree.assigned_ids()) == []
 	assert list(labels.items()) == []
+
+
+def test_corrupt_json_is_quarantined(tmp_path):
+	path = os.path.join(str(tmp_path), "data.json")
+	with open(path, "w", encoding="utf-8") as f:
+		f.write("this is not JSON {[")
+	tree, labels = storage.load(path)
+	assert list(tree.assigned_ids()) == []
+	assert list(labels.items()) == []
+	# Original file moved aside with a .corrupt-* suffix.
+	assert not os.path.exists(path)
+	assert glob.glob(os.path.join(str(tmp_path), "data.json.corrupt-*"))
+
+
+def test_non_object_top_level_is_quarantined(tmp_path):
+	path = os.path.join(str(tmp_path), "data.json")
+	with open(path, "w", encoding="utf-8") as f:
+		f.write('["not", "an", "object"]')
+	tree, labels = storage.load(path)
+	assert list(tree.assigned_ids()) == []
+	assert glob.glob(os.path.join(str(tmp_path), "data.json.corrupt-*"))

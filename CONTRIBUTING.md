@@ -18,13 +18,13 @@ pip install -r requirements-dev.txt
 
 ## Day-to-day commands
 
-| Task            | Command                                        |
-|-----------------|------------------------------------------------|
-| Run tests       | `pytest`                                       |
-| Lint            | `ruff check .`                                 |
-| Format          | `ruff format .`                                |
-| Build add-on    | `scons`  *(writes `semanticTree-X.Y.Z.nvda-addon`)* |
-| Stdlib-only run | `python tests/run.py` *(no pytest needed)*     |
+| Task            | Command                                         |
+|-----------------|-------------------------------------------------|
+| Run tests       | `pytest`                                        |
+| Lint            | `ruff check .`                                  |
+| Format          | `ruff format .`                                 |
+| Build add-on    | `python tools/build_addon.py` *(stdlib only)*   |
+| Stdlib-only run | `python tests/run.py` *(no pytest needed)*      |
 
 The CI workflow runs lint + tests + build on every push and pull
 request; releases are published when a `vX.Y.Z` tag is pushed (see
@@ -40,6 +40,44 @@ request; releases are published when a `vX.Y.Z` tag is pushed (see
   more naturally.
 * Comments are for the *why* of something non-obvious. Let names and
   types carry the *what*.
+
+## Manual smoke test in NVDA
+
+Automated tests cover the pure-Python core but cannot exercise NVDA's
+wx dialogs or live object tree. Before merging any change that touches
+`plugin.py`, `navigator.py`, `walker.py`, `identity.py`, or anything
+under `ui/`, walk through this checklist inside a real NVDA session:
+
+1. **Install the build.** `python tools/build_addon.py`, then install
+   the resulting `.nvda-addon` via NVDA → Tools → Manage add-ons.
+   Restart NVDA.
+2. **Label a weakly-named object.** Navigate to an object with no name
+   or a poor name (e.g. a toolbar's decorative icon). Press
+   **NVDA+Ctrl+Shift+L**, type a label, press Enter. NVDA should
+   announce "Label saved". Move away and back; the label should be
+   announced in place of the default name.
+3. **Assign a parent.** Press **NVDA+Ctrl+Shift+A**. The assign dialog
+   should open with the current semantic tree visible (or just
+   "(top level)" on a fresh install). Arrow-key to a parent, press
+   Enter. NVDA should announce "Assigned".
+4. **Semantic navigation.** Press **NVDA+Ctrl+Shift+Up/Down/Left/Right**.
+   The navigator object should move according to the semantic tree,
+   and NVDA's own navigator should follow (confirm with
+   **NVDA+Numpad5** / "report current navigator object").
+5. **Search.** Press **NVDA+Ctrl+Shift+F**. Start typing; the list
+   should narrow in real time. Try facet syntax like `role:button` and
+   negation like `-firefox`. Press Enter on a result; navigation
+   should jump to that object.
+6. **Persistence.** Restart NVDA. Your labels and assignments should
+   still be present (check via the search dialog).
+7. **Corrupt-state recovery.** Close NVDA. Edit
+   `%APPDATA%/nvda/semanticTree.json` to invalid JSON. Start NVDA.
+   The add-on should load empty (no crash), and
+   `semanticTree.json.corrupt-<timestamp>` should exist next to the
+   original path.
+
+If any step fails, file a bug using the template and include the
+application you were reading plus relevant NVDA log lines.
 
 ## Branches and PRs
 

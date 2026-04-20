@@ -12,8 +12,8 @@
 
 - [ ] `pytest` is green
 - [ ] `ruff check .` and `ruff format --check .` are clean
-- [ ] `scons` builds the `.nvda-addon` successfully
-- [ ] Manually smoke-tested inside NVDA (if the change touches plugin.py, navigator.py, walker.py, or ui/)
+- [ ] `python tools/build_addon.py` builds the `.nvda-addon` successfully
+- [ ] Manually smoke-tested inside NVDA (if the change touches plugin.py, navigator.py, walker.py, identity.py, or ui/ — see the checklist in CONTRIBUTING.md)
 
 ## Notes for reviewers
 
