@@ -1,0 +1,35 @@
+import os
+import zipfile
+import fnmatch
+
+import buildVars
+
+ADDON_NAME = buildVars.addon_info["addon_name"]
+ADDON_VERSION = buildVars.addon_info["addon_version"]
+ADDON_FILE = f"{ADDON_NAME}-{ADDON_VERSION}.nvda-addon"
+
+env = Environment(ENV=os.environ)
+
+
+def _should_include(path):
+	for pattern in buildVars.excludedFiles:
+		if fnmatch.fnmatch(path, pattern):
+			return False
+	return True
+
+
+def build_addon(target, source, env):
+	out_path = str(target[0])
+	with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zf:
+		zf.write("manifest.ini", "manifest.ini")
+		for root, _dirs, files in os.walk("addon"):
+			for name in files:
+				full = os.path.join(root, name)
+				arc = os.path.relpath(full, "addon")
+				if _should_include(arc):
+					zf.write(full, arc)
+
+
+addon = env.Command(ADDON_FILE, ["manifest.ini"], build_addon)
+env.AlwaysBuild(addon)
+env.Default(addon)
