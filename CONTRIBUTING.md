@@ -51,6 +51,14 @@ available if you need to assert that a block raises.
 
 ## Manual smoke test in NVDA
 
+A standalone, no-context-required walkthrough lives at
+[`docs/smoke_test.md`](docs/smoke_test.md). Hand that file to anyone
+you're asking to smoke-test a build — it's written so a first-time
+NVDA user can follow it end-to-end with a pass/fail report template
+at the bottom.
+
+Short version for contributors:
+
 Automated tests cover the pure-Python core but cannot exercise NVDA's
 wx dialogs or live object tree. Before merging any change that touches
 `plugin.py`, `navigator.py`, `walker.py`, `identity.py`, or anything

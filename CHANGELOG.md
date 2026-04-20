@@ -6,6 +6,14 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `docs/smoke_test.md` — standalone, no-context-required smoke-test
+  walkthrough. Hand it to anyone you ask to exercise a build
+  end-to-end; it covers install, gesture registration, help file,
+  label, assign, four-way navigation, search, persistence across
+  restart, and corrupt-state recovery, each with explicit pass/fail
+  criteria and a ready-to-fill report template at the end.
+
 ### Changed
 - Bundled in-NVDA help reverted from HTML back to Markdown
   (`addon/doc/en/readme.md`). The HTML was only introduced to match a
