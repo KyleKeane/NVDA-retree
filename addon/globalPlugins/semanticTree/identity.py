@@ -9,7 +9,8 @@ production, plain stub objects in tests), so the rest of the core never
 imports NVDA itself.
 """
 
-from typing import Any, Hashable, Optional, Tuple
+from collections.abc import Hashable
+from typing import Any
 
 
 def _attr(obj: Any, name: str, default: Any = "") -> Any:
@@ -20,7 +21,7 @@ def _attr(obj: Any, name: str, default: Any = "") -> Any:
 	return default if value is None else value
 
 
-def get_object_id(obj: Any) -> Optional[Tuple[Hashable, ...]]:
+def get_object_id(obj: Any) -> tuple[Hashable, ...] | None:
 	"""Return a hashable identity tuple, or None if obj is None.
 
 	The tuple mixes window identity (handle, control ID), semantic identity

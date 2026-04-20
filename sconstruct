@@ -1,18 +1,31 @@
+import builtins
+import fnmatch
 import os
 import zipfile
-import fnmatch
 
-import buildVars
+# ``buildVars.py`` uses ``_`` as NVDA does at runtime.
+if not hasattr(builtins, "_"):
+	builtins._ = lambda s: s
+
+import buildVars  # noqa: E402  (must follow the ``_`` shim)
 
 ADDON_NAME = buildVars.addon_info["addon_name"]
 ADDON_VERSION = buildVars.addon_info["addon_version"]
 ADDON_FILE = f"{ADDON_NAME}-{ADDON_VERSION}.nvda-addon"
 
+ALWAYS_EXCLUDE = [
+	"__pycache__/*",
+	"*/__pycache__/*",
+	"*.pyc",
+	"*.pyo",
+	".DS_Store",
+]
+
 env = Environment(ENV=os.environ)
 
 
 def _should_include(path):
-	for pattern in buildVars.excludedFiles:
+	for pattern in ALWAYS_EXCLUDE + buildVars.excludedFiles:
 		if fnmatch.fnmatch(path, pattern):
 			return False
 	return True
@@ -22,7 +35,8 @@ def build_addon(target, source, env):
 	out_path = str(target[0])
 	with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zf:
 		zf.write("manifest.ini", "manifest.ini")
-		for root, _dirs, files in os.walk("addon"):
+		for root, dirs, files in os.walk("addon"):
+			dirs[:] = [d for d in dirs if d != "__pycache__"]
 			for name in files:
 				full = os.path.join(root, name)
 				arc = os.path.relpath(full, "addon")

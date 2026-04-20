@@ -14,7 +14,8 @@ resolve IDs on that live path.
 """
 
 import weakref
-from typing import Any, Dict, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from .identity import get_object_id
 from .tree import ObjectId
@@ -22,7 +23,7 @@ from .tree import ObjectId
 
 class NVDAWalker:
 	def __init__(self) -> None:
-		self._cache: "Dict[ObjectId, weakref.ref]" = {}
+		self._cache: dict[ObjectId, weakref.ref] = {}
 
 	def remember(self, obj: Any) -> None:
 		oid = self.id_of(obj)
@@ -34,13 +35,16 @@ class NVDAWalker:
 			# Some NVDA objects may not support weak references; drop.
 			pass
 
-	def id_of(self, obj: Any) -> Optional[ObjectId]:
+	def id_of(self, obj: Any) -> ObjectId | None:
 		oid = get_object_id(obj)
-		if oid is not None:
-			self._cache.setdefault(oid, weakref.ref(obj)) if hasattr(obj, "__weakref__") else None
+		if oid is not None and hasattr(obj, "__weakref__"):
+			try:
+				self._cache.setdefault(oid, weakref.ref(obj))
+			except TypeError:
+				pass
 		return oid
 
-	def parent_of(self, obj: Any) -> Optional[Any]:
+	def parent_of(self, obj: Any) -> Any | None:
 		if obj is None:
 			return None
 		parent = getattr(obj, "parent", None)
@@ -50,15 +54,15 @@ class NVDAWalker:
 
 	def children_of(self, obj: Any) -> Iterable[Any]:
 		if obj is None:
-			return ()
+			return
 		children = getattr(obj, "children", None)
 		if children is None:
-			return ()
+			return
 		for child in children:
 			self.remember(child)
 			yield child
 
-	def object_for_id(self, object_id: ObjectId) -> Optional[Any]:
+	def object_for_id(self, object_id: ObjectId) -> Any | None:
 		ref = self._cache.get(object_id)
 		if ref is None:
 			return None

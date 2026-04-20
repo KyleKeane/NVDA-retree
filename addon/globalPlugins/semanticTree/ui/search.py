@@ -5,10 +5,10 @@ matches, Enter jumps to that object (and closes the dialog). The filter
 supports ``facet:value`` terms; see search.py for syntax.
 """
 
-from typing import Callable, List, Mapping, Optional
+from collections.abc import Callable, Mapping
 
-import wx  # type: ignore
 import gui  # type: ignore
+import wx  # type: ignore
 
 from ..labels import LabelStore
 from ..search import filter_items, sort_items
@@ -24,7 +24,7 @@ def _facets_for(oid, tree: SemanticTree, labels: LabelStore, walker: NVDAWalker)
 		role = str(getattr(obj, "role", "") or "")
 	app = getattr(obj, "appModuleName", "") if obj is not None else ""
 	label = labels.get(oid) or name or str(oid)
-	path_parts: List[str] = []
+	path_parts: list[str] = []
 	current = oid
 	while current is not None:
 		current = tree.parent_of(current)
@@ -69,7 +69,7 @@ class _SearchDialog(wx.Dialog):
 		super().__init__(parent, title=_("Semantic Tree: search"),
 						 style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 		self._all_items = list(items)
-		self._shown: List[Mapping[str, object]] = list(items)
+		self._shown: list[Mapping[str, object]] = list(items)
 		self._walker = walker
 
 		sizer = wx.BoxSizer(wx.VERTICAL)

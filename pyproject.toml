@@ -1,0 +1,49 @@
+[project]
+name = "nvda-retree"
+version = "0.1.0"
+description = "User-reconfigurable semantic layouts over the NVDA accessibility tree."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "Kyle Keane", email = "kkeane@mit.edu" }]
+
+# The real add-on is packaged by SCons into a .nvda-addon zip; this
+# pyproject exists for linting, testing, and IDE tooling only.
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["build", "dist", "*.egg-info"]
+
+[tool.ruff.lint]
+select = [
+	"E",    # pycodestyle errors
+	"W",    # pycodestyle warnings
+	"F",    # pyflakes
+	"I",    # isort
+	"UP",   # pyupgrade
+	"B",    # flake8-bugbear
+	"SIM",  # flake8-simplify
+]
+ignore = [
+	"E501",  # long lines; we already set line-length
+	"B008",  # function call in default argument (common in wx code)
+	"W191",  # tab indentation (we use tabs everywhere, per NVDA convention)
+	"E101",  # indentation contains mixed spaces and tabs (false positive with tabs)
+	"E111",  # indentation is not a multiple of N (false positive with tabs)
+	"E114",  # indentation is not a multiple of N (continuation, tabs)
+	"E117",  # over-indented (tabs)
+]
+# NVDA add-ons use the gettext ``_`` as a builtin.
+builtins = ["_"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]  # conftest sets sys.path before imports
+
+[tool.ruff.format]
+indent-style = "tab"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["addon/globalPlugins", "tests"]
+addopts = "-ra --strict-markers"

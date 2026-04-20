@@ -20,7 +20,8 @@ so it can be driven by real NVDA objects in production and by stubs in
 tests.
 """
 
-from typing import Any, Iterable, List, Optional, Protocol
+from collections.abc import Iterable
+from typing import Any, Protocol
 
 from .tree import ObjectId, SemanticTree
 
@@ -28,13 +29,13 @@ from .tree import ObjectId, SemanticTree
 class AccessWalker(Protocol):
 	"""How to traverse the accessibility tree and identify objects."""
 
-	def id_of(self, obj: Any) -> Optional[ObjectId]: ...
-	def parent_of(self, obj: Any) -> Optional[Any]: ...
+	def id_of(self, obj: Any) -> ObjectId | None: ...
+	def parent_of(self, obj: Any) -> Any | None: ...
 	def children_of(self, obj: Any) -> Iterable[Any]: ...
-	def object_for_id(self, object_id: ObjectId) -> Optional[Any]: ...
+	def object_for_id(self, object_id: ObjectId) -> Any | None: ...
 
 
-def effective_parent(obj: Any, tree: SemanticTree, walker: AccessWalker) -> Optional[ObjectId]:
+def effective_parent(obj: Any, tree: SemanticTree, walker: AccessWalker) -> ObjectId | None:
 	oid = walker.id_of(obj)
 	if oid is None:
 		return None
@@ -49,7 +50,7 @@ def effective_parent(obj: Any, tree: SemanticTree, walker: AccessWalker) -> Opti
 	return None
 
 
-def effective_children(parent_id: Optional[ObjectId], tree: SemanticTree, walker: AccessWalker) -> List[ObjectId]:
+def effective_children(parent_id: ObjectId | None, tree: SemanticTree, walker: AccessWalker) -> list[ObjectId]:
 	"""Return the ordered IDs of effective children under ``parent_id``.
 
 	Order:
@@ -61,7 +62,7 @@ def effective_children(parent_id: Optional[ObjectId], tree: SemanticTree, walker
 	not useful, so the caller normally only passes assigned IDs).
 	"""
 	seen: set = set()
-	result: List[ObjectId] = []
+	result: list[ObjectId] = []
 
 	for cid in tree.explicit_children(parent_id):
 		if cid not in seen:
@@ -83,7 +84,9 @@ def effective_children(parent_id: Optional[ObjectId], tree: SemanticTree, walker
 	return result
 
 
-def _inherited_descendants(parent_obj: Any, parent_id: ObjectId, tree: SemanticTree, walker: AccessWalker) -> Iterable[ObjectId]:
+def _inherited_descendants(
+	parent_obj: Any, parent_id: ObjectId, tree: SemanticTree, walker: AccessWalker
+) -> Iterable[ObjectId]:
 	for child_obj in walker.children_of(parent_obj):
 		cid = walker.id_of(child_obj)
 		if cid is None:

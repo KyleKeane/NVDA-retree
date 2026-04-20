@@ -1,9 +1,9 @@
 """Dialog: set or clear a custom label for the current navigator object."""
 
-from typing import Callable
+from collections.abc import Callable
 
-import wx  # type: ignore
 import gui  # type: ignore
+import wx  # type: ignore
 
 
 def open_label_dialog(current: str, on_commit: Callable[[str], None]) -> None:

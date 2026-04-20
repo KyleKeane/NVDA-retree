@@ -12,7 +12,7 @@ never ask "give me the nth child of id X" in isolation, we always ask
 robust when objects we have never seen live are referenced by assignment.
 """
 
-from typing import Any, List, Optional
+from typing import Any
 
 from .inheritance import effective_children, effective_parent
 from .tree import ObjectId, SemanticTree
@@ -23,18 +23,18 @@ class SemanticNavigator:
 	def __init__(self, tree: SemanticTree, walker: NVDAWalker) -> None:
 		self._tree = tree
 		self._walker = walker
-		self._current: Optional[Any] = None
+		self._current: Any | None = None
 
 	@property
-	def current(self) -> Optional[Any]:
+	def current(self) -> Any | None:
 		return self._current
 
-	def focus(self, obj: Optional[Any]) -> None:
+	def focus(self, obj: Any | None) -> None:
 		self._current = obj
 		if obj is not None:
 			self._walker.remember(obj)
 
-	def to_parent(self) -> Optional[Any]:
+	def to_parent(self) -> Any | None:
 		if self._current is None:
 			return None
 		pid = effective_parent(self._current, self._tree, self._walker)
@@ -52,7 +52,7 @@ class SemanticNavigator:
 			self.focus(parent_obj)
 		return parent_obj
 
-	def to_first_child(self) -> Optional[Any]:
+	def to_first_child(self) -> Any | None:
 		if self._current is None:
 			return None
 		cid = self._walker.id_of(self._current)
@@ -68,13 +68,13 @@ class SemanticNavigator:
 		children_ids = effective_children(cid, self._tree, self._walker)
 		return self._focus_by_id(children_ids[0]) if children_ids else None
 
-	def to_next_sibling(self) -> Optional[Any]:
+	def to_next_sibling(self) -> Any | None:
 		return self._sibling_move(offset=+1)
 
-	def to_previous_sibling(self) -> Optional[Any]:
+	def to_previous_sibling(self) -> Any | None:
 		return self._sibling_move(offset=-1)
 
-	def _sibling_move(self, offset: int) -> Optional[Any]:
+	def _sibling_move(self, offset: int) -> Any | None:
 		if self._current is None:
 			return None
 		siblings = self._sibling_ids()
@@ -86,13 +86,13 @@ class SemanticNavigator:
 			return None
 		return self._focus_by_id(siblings[index])
 
-	def _sibling_ids(self) -> List[ObjectId]:
+	def _sibling_ids(self) -> list[ObjectId]:
 		parent_id = effective_parent(self._current, self._tree, self._walker)
 		if parent_id is None:
-			return [oid for oid in self._tree.roots()]
+			return list(self._tree.roots())
 		return effective_children(parent_id, self._tree, self._walker)
 
-	def _focus_by_id(self, oid: ObjectId) -> Optional[Any]:
+	def _focus_by_id(self, oid: ObjectId) -> Any | None:
 		obj = self._walker.object_for_id(oid)
 		if obj is None:
 			return None

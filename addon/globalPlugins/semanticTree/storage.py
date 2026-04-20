@@ -14,7 +14,6 @@ methods on :class:`SemanticTree` and :class:`LabelStore` convert them back.
 
 import json
 import os
-from typing import Tuple
 
 from .labels import LabelStore
 from .tree import SemanticTree
@@ -23,7 +22,7 @@ from .tree import SemanticTree
 SCHEMA_VERSION = 1
 
 
-def load(path: str) -> Tuple[SemanticTree, LabelStore]:
+def load(path: str) -> tuple[SemanticTree, LabelStore]:
 	if not os.path.exists(path):
 		return SemanticTree(), LabelStore()
 	with open(path, "r", encoding="utf-8") as f:

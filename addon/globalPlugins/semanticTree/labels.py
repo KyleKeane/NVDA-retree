@@ -3,7 +3,7 @@
 Pure mapping from ``object_id -> str``. Persistence is handled by storage.py.
 """
 
-from typing import Dict, Hashable, Iterable, Optional
+from collections.abc import Hashable, Iterable
 
 
 ObjectId = Hashable
@@ -11,7 +11,7 @@ ObjectId = Hashable
 
 class LabelStore:
 	def __init__(self) -> None:
-		self._labels: Dict[ObjectId, str] = {}
+		self._labels: dict[ObjectId, str] = {}
 
 	def set(self, object_id: ObjectId, label: str) -> None:
 		if not label:
@@ -22,13 +22,13 @@ class LabelStore:
 	def clear(self, object_id: ObjectId) -> None:
 		self._labels.pop(object_id, None)
 
-	def get(self, object_id: ObjectId) -> Optional[str]:
+	def get(self, object_id: ObjectId) -> str | None:
 		return self._labels.get(object_id)
 
 	def items(self) -> Iterable:
 		return self._labels.items()
 
-	def to_dict(self) -> Dict[str, list]:
+	def to_dict(self) -> dict[str, list]:
 		return {
 			"labels": [
 				[list(oid) if isinstance(oid, tuple) else oid, text]
@@ -37,7 +37,7 @@ class LabelStore:
 		}
 
 	@classmethod
-	def from_dict(cls, data: Dict[str, list]) -> "LabelStore":
+	def from_dict(cls, data: dict[str, list]) -> "LabelStore":
 		store = cls()
 		for oid, text in data.get("labels", []):
 			key = tuple(oid) if isinstance(oid, list) else oid

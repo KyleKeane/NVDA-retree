@@ -18,7 +18,7 @@ prefixed with ``<facet>:`` restricts the match to that facet (e.g.
 Kept pure so the search UI can reuse it and tests can cover it without wx.
 """
 
-from typing import Iterable, List, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 
 def _normalise(value: object) -> str:
@@ -37,22 +37,20 @@ def _term_matches(facets: Mapping[str, object], term: str) -> bool:
 
 
 def matches(facets: Mapping[str, object], query: str) -> bool:
-	terms = query.split()
-	for term in terms:
+	for term in query.split():
 		if term.startswith("-"):
 			if _term_matches(facets, term[1:]):
 				return False
-		else:
-			if not _term_matches(facets, term):
-				return False
+		elif not _term_matches(facets, term):
+			return False
 	return True
 
 
-def filter_items(items: Iterable[Mapping[str, object]], query: str) -> List[Mapping[str, object]]:
+def filter_items(items: Iterable[Mapping[str, object]], query: str) -> list[Mapping[str, object]]:
 	if not query.strip():
 		return list(items)
 	return [item for item in items if matches(item, query)]
 
 
-def sort_items(items: Sequence[Mapping[str, object]]) -> List[Mapping[str, object]]:
+def sort_items(items: Sequence[Mapping[str, object]]) -> list[Mapping[str, object]]:
 	return sorted(items, key=lambda item: _normalise(item.get("label")))

@@ -5,10 +5,10 @@ objects plus a synthetic "(root)" entry. Arrow keys walk the tree.
 Enter confirms; Delete unassigns (makes it a root).
 """
 
-from typing import Callable, Dict, Optional
+from collections.abc import Callable
 
-import wx  # type: ignore
 import gui  # type: ignore
+import wx  # type: ignore
 
 from ..labels import LabelStore
 from ..tree import ObjectId, SemanticTree
@@ -20,13 +20,15 @@ def open_assign_dialog(
 	tree: SemanticTree,
 	labels: LabelStore,
 	walker: NVDAWalker,
-	on_commit: Callable[[Optional[ObjectId]], None],
+	on_commit: Callable[[ObjectId | None], None],
 ) -> None:
 	dlg = _AssignDialog(gui.mainFrame, child_id, tree, labels, walker)
 	gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_commit))
 
 
-def _handle(result: int, dlg: "_AssignDialog", on_commit: Callable[[Optional[ObjectId]], None]) -> None:
+def _handle(
+	result: int, dlg: "_AssignDialog", on_commit: Callable[[ObjectId | None], None]
+) -> None:
 	if result == wx.ID_OK:
 		on_commit(dlg.selected_parent_id)
 	dlg.Destroy()
@@ -54,7 +56,7 @@ class _AssignDialog(wx.Dialog):
 		self._tree = tree
 		self._labels = labels
 		self._walker = walker
-		self._id_for_item: Dict[wx.TreeItemId, Optional[ObjectId]] = {}
+		self._id_for_item: dict[wx.TreeItemId, ObjectId | None] = {}
 
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(self, label=_("Choose a semantic parent:")), flag=wx.ALL, border=8)
@@ -75,7 +77,7 @@ class _AssignDialog(wx.Dialog):
 		self._tree_ctrl.ExpandAllChildren(root)
 		self._tree_ctrl.SelectItem(semantic_root)
 
-	def _add_children(self, parent_item: wx.TreeItemId, parent_id: Optional[ObjectId]) -> None:
+	def _add_children(self, parent_item: wx.TreeItemId, parent_id: ObjectId | None) -> None:
 		for cid in self._tree.explicit_children(parent_id):
 			if cid == self._child_id:
 				# Don't let the user reparent under itself or its descendants.
@@ -85,7 +87,7 @@ class _AssignDialog(wx.Dialog):
 			self._add_children(item, cid)
 
 	@property
-	def selected_parent_id(self) -> Optional[ObjectId]:
+	def selected_parent_id(self) -> ObjectId | None:
 		item = self._tree_ctrl.GetSelection()
 		if not item.IsOk():
 			return None
