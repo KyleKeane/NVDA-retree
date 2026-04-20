@@ -23,9 +23,16 @@ def open_search_dialog(
 	walker: NVDAWalker,
 	on_pick: Callable[[object], None],
 ) -> None:
-	items = build_items(tree, labels, walker)
-	dlg = _SearchDialog(gui.mainFrame, items, walker)
-	gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_pick))
+	try:
+		items = build_items(tree, labels, walker)
+		dlg = _SearchDialog(gui.mainFrame, items, walker)
+		gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_pick))
+	except Exception as exc:
+		try:
+			import ui  # type: ignore
+			ui.message(_("Could not open dialog: {}").format(exc))
+		except Exception:
+			pass
 
 
 def _handle(result: int, dlg: "_SearchDialog", on_pick: Callable[[object], None]) -> None:
@@ -33,6 +40,12 @@ def _handle(result: int, dlg: "_SearchDialog", on_pick: Callable[[object], None]
 		picked = dlg.picked_object
 		if picked is not None:
 			on_pick(picked)
+		elif dlg.had_selection:
+			try:
+				import ui  # type: ignore
+				ui.message(_("Could not locate that object on screen any more."))
+			except Exception:
+				pass
 	dlg.Destroy()
 
 
@@ -79,6 +92,15 @@ class _SearchDialog(wx.Dialog):
 		if path:
 			parts.append(f"— {path}")
 		return " ".join(parts)
+
+	@property
+	def had_selection(self) -> bool:
+		"""True iff the user confirmed with a list item highlighted.
+
+		Used by the caller to distinguish "nothing was picked" (silent)
+		from "picked object could no longer be resolved" (announce)."""
+		index = self._list.GetSelection()
+		return index != wx.NOT_FOUND and bool(self._shown)
 
 	@property
 	def picked_object(self):

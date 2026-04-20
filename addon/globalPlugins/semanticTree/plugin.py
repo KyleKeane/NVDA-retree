@@ -32,9 +32,23 @@ def _data_path() -> str:
 
 
 def _role_text(obj) -> str:
+	"""Human-readable role name, tolerant of NVDA API drift.
+
+	Tries, in order:
+	  1. ``obj.roleText`` (some drivers pre-compute this).
+	  2. ``role.displayString`` (modern NVDA: controlTypes.Role enum).
+	  3. ``controlTypes.roleLabels[role]`` (legacy NVDA dict).
+	  4. ``str(role)`` as a last resort.
+	"""
+	pre = getattr(obj, "roleText", None)
+	if pre:
+		return str(pre)
 	role = getattr(obj, "role", None)
 	if role is None:
 		return ""
+	display = getattr(role, "displayString", None)
+	if display:
+		return str(display)
 	try:
 		import controlTypes  # type: ignore
 	except ImportError:
@@ -42,8 +56,8 @@ def _role_text(obj) -> str:
 	role_labels = getattr(controlTypes, "roleLabels", None)
 	if role_labels is not None:
 		try:
-			text = role_labels.get(role)
-		except Exception:
+			text = role_labels.get(role) if hasattr(role_labels, "get") else role_labels[role]
+		except (KeyError, TypeError):
 			text = None
 		if text:
 			return str(text)

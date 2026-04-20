@@ -24,8 +24,15 @@ def open_assign_dialog(
 	walker: NVDAWalker,
 	on_commit: Callable[[ObjectId | None], None],
 ) -> None:
-	dlg = _AssignDialog(gui.mainFrame, child_id, tree, labels, walker)
-	gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_commit))
+	try:
+		dlg = _AssignDialog(gui.mainFrame, child_id, tree, labels, walker)
+		gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_commit))
+	except Exception as exc:
+		try:
+			import ui  # type: ignore
+			ui.message(_("Could not open dialog: {}").format(exc))
+		except Exception:
+			pass
 
 
 def _handle(

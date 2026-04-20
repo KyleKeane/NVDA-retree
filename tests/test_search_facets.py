@@ -29,6 +29,22 @@ def test_role_text_falls_back_to_role():
 	assert role_text(obj) == "link"
 
 
+def test_role_text_prefers_display_string_on_enum_role():
+	"""Modern NVDA uses a Role enum whose ``displayString`` gives the
+	localised label. We should prefer it over ``str(role)`` which would
+	otherwise render something like 'Role.BUTTON'."""
+
+	class FakeRole:
+		displayString = "push button"
+
+		def __str__(self):
+			return "Role.BUTTON"
+
+	obj = FakeObject("X")
+	obj.role = FakeRole()
+	assert role_text(obj) == "push button"
+
+
 def test_facets_populated_for_real_lookup():
 	obj = FakeObject("Reload", role="button", app_name="firefox")
 	walker = FakeWalker()

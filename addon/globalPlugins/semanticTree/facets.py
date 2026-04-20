@@ -22,13 +22,32 @@ def app_name(obj: Any) -> str:
 
 
 def role_text(obj: Any) -> str:
+	"""Mirror of ``plugin._role_text``. Kept wx-free so the search
+	dialog can label entries consistently across NVDA versions."""
 	if obj is None:
 		return ""
-	text = getattr(obj, "roleText", None)
-	if text:
-		return str(text)
+	pre = getattr(obj, "roleText", None)
+	if pre:
+		return str(pre)
 	role = getattr(obj, "role", None)
-	return str(role) if role is not None else ""
+	if role is None:
+		return ""
+	display = getattr(role, "displayString", None)
+	if display:
+		return str(display)
+	try:
+		import controlTypes  # type: ignore
+	except ImportError:
+		return str(role)
+	role_labels = getattr(controlTypes, "roleLabels", None)
+	if role_labels is not None:
+		try:
+			text = role_labels.get(role) if hasattr(role_labels, "get") else role_labels[role]
+		except (KeyError, TypeError):
+			text = None
+		if text:
+			return str(text)
+	return str(role)
 
 
 def facets_for(oid, tree: SemanticTree, labels: LabelStore, walker) -> Mapping[str, object]:

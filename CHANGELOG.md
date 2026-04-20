@@ -6,6 +6,18 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (pre-release polish)
+- Search dialog: when the picked object has been evicted from the
+  walker cache, announce "Could not locate that object on screen any
+  more" instead of silently closing.
+- `_role_text` (plugin + facets) now prefers `role.displayString` on
+  modern NVDA's Role enum, falling back through legacy
+  `controlTypes.roleLabels` and finally `str(role)`. Previous code
+  produced strings like "Role.BUTTON" on newer NVDA builds.
+- Every `gui.runScriptModalDialog` call is wrapped so that any NVDA
+  API drift fails gracefully with a spoken message rather than
+  crashing the add-on.
+
 ### Fixed (pre-release audit round)
 - `identity.get_object_id` no longer collapses `indexInParent=0` (first child)
   or `windowHandle=0` into the missing-value sentinel. Typed helpers

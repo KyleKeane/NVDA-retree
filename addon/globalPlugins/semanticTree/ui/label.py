@@ -7,8 +7,19 @@ import wx  # type: ignore
 
 
 def open_label_dialog(current: str, on_commit: Callable[[str], None]) -> None:
-	dlg = _LabelDialog(gui.mainFrame, current)
-	gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_commit))
+	try:
+		dlg = _LabelDialog(gui.mainFrame, current)
+		gui.runScriptModalDialog(dlg, lambda result: _handle(result, dlg, on_commit))
+	except Exception as exc:
+		_report_dialog_failure(exc)
+
+
+def _report_dialog_failure(exc: Exception) -> None:
+	try:
+		import ui  # type: ignore
+		ui.message(_("Could not open dialog: {}").format(exc))
+	except Exception:
+		pass
 
 
 def _handle(result: int, dlg: "_LabelDialog", on_commit: Callable[[str], None]) -> None:
