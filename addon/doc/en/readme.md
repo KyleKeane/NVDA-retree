@@ -38,4 +38,4 @@ file cannot wedge NVDA.
 
 ## Reporting problems
 
-See the project page at https://github.com/kylekeane/nvda-retree.
+See the [project page](https://github.com/kylekeane/nvda-retree).

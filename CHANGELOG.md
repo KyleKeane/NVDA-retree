@@ -7,11 +7,17 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
-- Bundled in-NVDA help reverted from HTML back to Markdown
-  (`addon/doc/en/readme.md`). The HTML was only introduced to match a
-  stale `docFileName` value; Markdown is what blind users relying on
-  screen readers navigate most comfortably. Both `manifest.ini` and
-  `buildVars.py` now point at `readme.md`.
+- Bundled NVDA help is now authored in Markdown
+  (`addon/doc/en/readme.md`) and converted to HTML at build time by a
+  tiny stdlib-only converter (`tools/md_to_html.py`). The built zip
+  ships `readme.html`, so NVDA's in-add-on help button opens cleanly
+  in the browser with proper `<h1>` / `<h2>` / `<ul>` / `<li>` /
+  `<strong>` tags for browse-mode navigation. The source tree stays
+  markdown-friendly for screen-reader authoring. `manifest.ini` and
+  `buildVars.py` point at `readme.html` (what the zip contains). 21
+  new unit tests cover the converter (headings, bullet lists with
+  indented continuation lines, inline bold / italic / code / links,
+  HTML escaping, document-title extraction).
 
 ## [0.1.0] — foundation
 
