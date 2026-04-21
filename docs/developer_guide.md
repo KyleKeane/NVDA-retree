@@ -148,6 +148,30 @@ Atomic JSON: writes to `path + ".tmp"`, then `os.replace`s. The file
 lives beside NVDA's user config so that uninstalling and reinstalling
 the add-on does not nuke a user's carefully-curated tree.
 
+### `updater.py`
+
+Self-update check against GitHub Releases. Stdlib only
+(`urllib.request` + `json`). `check_for_update` fetches
+`/repos/{owner}/{repo}/releases/latest`, compares the tag against
+the installed version (via the tiny tuple comparator in
+`_parse_version`), and returns a `CheckResult` describing one of
+four states: `up_to_date`, `update_available`, `no_asset`, `error`.
+
+`download_addon(url)` writes the `.nvda-addon` to a fresh temp dir
+and returns the path. `launch_install(path)` uses `os.startfile()`
+so NVDA's registered file-association handles the install flow —
+standard confirmation dialog, replacement logic, restart prompt.
+No custom install code; every NVDA version is supported via a
+single well-established entry point.
+
+The HTTP fetch is injectable (`fetcher` argument) so the logic is
+unit-tested without touching the network. User's
+`semanticTree.json` lives outside the add-on directory; the
+installer does not touch it, so state survives updates
+automatically. Breaking schema changes are handled by
+`storage.py`'s existing version quarantine — nothing update-specific
+to wire up.
+
 ## The NVDA layer
 
 ### `plugin.py`

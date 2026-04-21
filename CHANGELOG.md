@@ -6,6 +6,21 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Self-update check.** A new **"Check for Semantic Tree updates…"**
+  item under NVDA → Tools asks GitHub's Releases API whether a newer
+  version exists, shows the release notes, and offers to install
+  with a single click. Download + install go through NVDA's
+  standard `.nvda-addon` file-association flow, so the usual
+  confirmation dialog and restart prompt apply. User's
+  `semanticTree.json` is not touched by the installer and rides
+  through every update automatically; breaking schema changes are
+  handled by the existing version-quarantine path in `storage.py`.
+  Stdlib only (`urllib.request` + `json`) — no `requests`, no
+  `packaging`. 19 new unit tests cover the pure logic via an
+  injected fetcher.
+
+
 ### Changed — state-file schema bump (breaking)
 - **Object identity is now stable across app restarts.** The old
   identity tuple included `windowHandle`, which Windows reassigns
