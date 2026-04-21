@@ -107,11 +107,133 @@ application you were reading plus relevant NVDA log lines.
 
 ## Releasing
 
-1. Update `manifest.ini` and `buildVars.py` to the new version.
-2. Add an entry at the top of `CHANGELOG.md`.
-3. Open and merge a PR for the above.
-4. Tag `main` with `vX.Y.Z`. The release workflow builds the
-   `.nvda-addon` and attaches it to a GitHub release.
+End users discover updates through the **NVDA → Tools → Check for
+Semantic Tree updates…** menu item. That menu item hits GitHub's
+`/releases/latest` endpoint, reads the tag name, and downloads the
+attached `.nvda-addon`. So "shipping a new version" is: publish a
+GitHub Release on a `vX.Y.Z` tag with the built `.nvda-addon`
+attached. Everything below automates that.
+
+### Step 1 — pre-flight
+
+Before you start a release:
+
+* `python tests/run.py` prints `all N green`.
+* `git status` is clean on `main`; `git pull` is up to date with
+  `origin/main`.
+* Skim the `[Unreleased]` section of `CHANGELOG.md`. Does the list
+  accurately describe every user-visible change going into this
+  version?
+* If you're not sure what version to bump to, see
+  [Step 5 — versioning policy](#step-5--versioning-policy) below.
+
+### Step 2 — the version-bump PR
+
+Open one PR that does exactly three small edits:
+
+1. **`manifest.ini`** — set `version = X.Y.Z`.
+2. **`buildVars.py`** — set `"addon_version": "X.Y.Z"`. Bump
+   `"addon_lastTestedNVDAVersion"` if you've exercised this build
+   against a newer NVDA than the one already listed.
+3. **`CHANGELOG.md`** — rename the `## [Unreleased]` heading to
+   `## [X.Y.Z] — YYYY-MM-DD`, and add a fresh empty
+   `## [Unreleased]` block above it. Leave the bullet content
+   alone; it's what users will see as release notes.
+
+Merge when CI is green.
+
+### Step 3 — tag and push
+
+```bash
+git checkout main
+git pull
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+The tag push triggers `.github/workflows/release.yml`, which does,
+automatically:
+
+1. Verifies the tag's `X.Y.Z` matches `manifest.ini`'s `version`.
+   If they don't match, the workflow aborts before building (a
+   safety net — usually this only fires if you forgot step 2).
+2. Runs the full test suite.
+3. Builds `semanticTree-X.Y.Z.nvda-addon` with
+   `python tools/build_addon.py`.
+4. Publishes a **GitHub Release** on the tag, with the
+   `.nvda-addon` attached and release notes auto-generated from
+   the commits since the previous release.
+
+Watch the run live on the **Actions** tab of the repo — end-to-end
+takes about 60 seconds.
+
+### Step 4 — confirm the user-visible path
+
+* Open
+  <https://github.com/KyleKeane/NVDA-retree/releases/latest>.
+  It should show the new version tag.
+* The release page's **Assets** section must list
+  `semanticTree-X.Y.Z.nvda-addon`. If it doesn't, the workflow
+  failed halfway; inspect the Actions run, fix the cause, then
+  cut a new patch version (don't try to delete or re-push the
+  tag — see [Fixing a bad release](#fixing-a-bad-release)).
+* On a test NVDA machine that has an older version installed, go
+  to **NVDA → Tools → Check for Semantic Tree updates…**. The
+  dialog should now offer the new version with your release
+  notes. Click **Install now** — NVDA's standard add-on installer
+  takes over from there.
+
+### Step 5 — versioning policy
+
+We follow [Semantic Versioning](https://semver.org/):
+
+| Change                                                            | Bump  |
+| ----------------------------------------------------------------- | ----- |
+| Bug fix, docs-only, internal refactor                             | patch |
+| New user-visible feature, new gesture, non-breaking improvement   | minor |
+| Breaking UX change, **bumped `SCHEMA_VERSION` in `storage.py`**   | major |
+
+Bumping `SCHEMA_VERSION` is the most important "major" trigger. A
+version with a new schema will automatically quarantine users' old
+`semanticTree.json` on first load after install (renamed to
+`.corrupt-<timestamp>`, warning in the NVDA log, start empty). The
+add-on keeps working; the user just loses labels and assignments.
+That's acceptable behaviour for a `major`, but a breaking surprise
+for a `minor` — hence the rule.
+
+### Fixing a bad release
+
+If the workflow fails, or the published release turns out subtly
+wrong, **do not** try to edit or delete the tag. Tags are cached by
+clients (including our own updater, and anyone with the existing
+`.nvda-addon` already downloaded), and moving them causes
+silent-looking bugs.
+
+The correct recovery is:
+
+1. Merge a fix PR into `main`.
+2. Cut a new patch version: `X.Y.Z + 1`.
+3. Tag `main` with the new version and push.
+
+The next time any user clicks **Check for Semantic Tree updates…**,
+they'll be offered the fixed version and skip straight past the
+broken one.
+
+### How users experience a release
+
+For reference, the user-side of the flow looks like:
+
+1. Open NVDA → Tools → **Check for Semantic Tree updates…**
+2. A "Checking…" indicator flashes briefly.
+3. Either: a dialog offering the new version with release notes,
+   or an "up to date" message.
+4. On **Install now**, NVDA downloads the `.nvda-addon` and hands
+   it to its own standard install flow (confirmation, then restart
+   prompt).
+
+Users' labels and assignments live in `%APPDATA%\nvda\semanticTree.json`,
+outside the add-on directory, so updates never touch them (except
+for the schema-version quarantine case described above).
 
 ## Reporting bugs
 

@@ -7,6 +7,19 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Release + update documentation.** `CONTRIBUTING.md`'s
+  **Releasing** section is now a full walkthrough: pre-flight
+  check, version-bump PR, tag-and-push, verification, SemVer
+  policy, and a "don't move a tag, cut a patch" recovery guide.
+  `addon/doc/en/readme.md` gains a **Staying up to date** section
+  for end users describing the Tools menu item and the "install
+  never touches your state" guarantee. `README.md` references the
+  update path from the installation section. `docs/smoke_test.md`
+  gains a section 11 covering the update-check menu item so
+  testers verify the integration without actually installing
+  anything.
+
+### Added
 - **Self-update check.** A new **"Check for Semantic Tree updates…"**
   item under NVDA → Tools asks GitHub's Releases API whether a newer
   version exists, shows the release notes, and offers to install
