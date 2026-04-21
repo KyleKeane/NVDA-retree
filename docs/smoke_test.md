@@ -289,7 +289,36 @@ start at all.
 
 ---
 
-## 11. If anything fails: how to capture the detail we need
+## 11. Test: the update-check menu item
+
+This confirms the self-update integration is wired up, without
+actually installing anything.
+
+1. Press **NVDA+N** &rarr; **Tools**. Arrow through the submenu
+   items.
+2. You should find an entry labelled **Check for Semantic Tree
+   updates…**. Select it (press Enter).
+
+**Pass:** A "Checking…" indicator briefly appears, then a dialog
+opens with either:
+
+* **Semantic Tree is up to date** (you are on the current release
+  on GitHub), or
+* **A new version of the Semantic Tree add-on is available** with
+  release notes and an **Install now** button (you are on an older
+  release).
+
+Either outcome is a pass for this section. Dismiss the dialog with
+Close / Cancel; do not actually install anything unless you're
+specifically testing the install flow.
+
+**Fail:** The menu item is missing from Tools, clicking it does
+nothing, or NVDA shows a Python traceback instead of one of the
+expected dialogs. Capture the log line per section 12.
+
+---
+
+## 12. If anything fails: how to capture the detail we need
 
 1. Inside NVDA press **NVDA+N** &rarr; **Tools** &rarr; **View log**.
 2. The log window opens. Press **Ctrl+End** to jump to the bottom.
@@ -326,6 +355,7 @@ Section 7 Four arrow moves : PASS / FAIL — notes:
 Section 8 Search           : PASS / FAIL — notes:
 Section 9 Persistence      : PASS / FAIL — notes:
 Section 10 Corrupt recovery: PASS / FAIL — notes:
+Section 11 Update check    : PASS / FAIL — notes:
 
 Anything that crashed, hung, or felt wrong:
 

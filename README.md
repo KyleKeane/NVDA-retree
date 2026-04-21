@@ -138,6 +138,20 @@ Restart when prompted.
 Either path produces the same running add-on; the scratchpad just
 lets you reload after edits without rebuilding.
 
+## Staying up to date
+
+Once installed, the add-on can update itself from GitHub:
+**NVDA → Tools → Check for Semantic Tree updates…**. The menu item
+hits `api.github.com/repos/KyleKeane/NVDA-retree/releases/latest`,
+shows the release notes, and downloads the `.nvda-addon` straight
+into NVDA's standard installer. No background network traffic —
+updates only run when you click the menu item.
+
+Your labels and assignments in `%APPDATA%\nvda\semanticTree.json`
+are never touched by an update. See `addon/doc/en/readme.md` for
+the user-side walkthrough, and [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing)
+for how to cut a release that propagates to existing installs.
+
 ## Running the tests
 
 ```
