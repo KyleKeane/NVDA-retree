@@ -258,10 +258,19 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 			ui.message(_("Cannot label this object"))
 			return
 		current = self._labels.get(oid) or ""
-		open_label_dialog(current, lambda text: self._commit_label(oid, text))
+		open_label_dialog(
+			current,
+			lambda text, ignore_name: self._commit_label(oid, text, ignore_name),
+		)
 
-	def _commit_label(self, oid, text: str) -> None:
-		self._labels.set(oid, text)
+	def _commit_label(self, oid, text: str, ignore_name: bool = False) -> None:
+		from . import patterns
+		stored_key = patterns.name_agnostic(oid) if ignore_name else oid
+		# If the exact oid previously held a label, clear it so the new
+		# pattern (or the new exact) is the single source of truth.
+		if stored_key != oid:
+			self._labels.clear(oid)
+		self._labels.set(stored_key, text)
 		storage.save(self._path, self._tree, self._labels)
 		ui.message(_("Label saved") if text else _("Label cleared"))
 

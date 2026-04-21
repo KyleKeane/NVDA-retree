@@ -7,6 +7,34 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Pattern matching for labels (V1).** New `patterns.py` module
+  (stdlib only, ~120 lines) lets stored `ObjectId`s carry
+  `WILDCARD` (`None`) in per-node `discriminator` or
+  `sibling_index` slots. `LabelStore.get` now falls back to a
+  pattern scan when the exact id misses, picking the most
+  specific pattern when several apply. The label dialog gained an
+  "Apply this label to any object with the same role and position,
+  ignoring name changes" checkbox. Tick it to attach the label to
+  any object in the same spot regardless of what its name says —
+  e.g. a button that toggles between "Save" and "Save As…".
+- `SemanticTree.assign` now refuses pattern IDs with a clear
+  `ValueError`. Tree-level pattern assignments are planned V2
+  work; the guard prevents accidental leakage.
+
+### Fixed
+- **State files now actually persist across NVDA restarts.**
+  `LabelStore.from_dict` and `SemanticTree.from_dict` only
+  converted the outer JSON array back to a tuple, leaving nested
+  path arrays as lists — which are unhashable and would blow up
+  on the next dict lookup. `storage.load` then caught the
+  resulting `TypeError` and silently quarantined the file. Net
+  effect: the identity fix from PR #11 was working in memory but
+  could never survive a restart. Both `from_dict`s now decode
+  recursively, so nested paths come back as nested tuples and
+  stay hashable.
+
+
+### Added
 - **Release + update documentation.** `CONTRIBUTING.md`'s
   **Releasing** section is now a full walkthrough: pre-flight
   check, version-bump PR, tag-and-push, verification, SemVer

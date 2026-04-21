@@ -314,11 +314,41 @@ specifically testing the install flow.
 
 **Fail:** The menu item is missing from Tools, clicking it does
 nothing, or NVDA shows a Python traceback instead of one of the
-expected dialogs. Capture the log line per section 12.
+expected dialogs. Capture the log line per section 13.
 
 ---
 
-## 12. If anything fails: how to capture the detail we need
+## 12. Test: wildcard labels ("ignore name changes")
+
+This confirms that a label set with the wildcard checkbox applies
+to any object in the same position, even when its name differs.
+
+1. Open Notepad. Move the navigator to the edit area
+   (**NVDA+Numpad5**).
+2. Press **NVDA+Ctrl+Shift+L**. The label dialog opens.
+3. Type `Editor` in the text box.
+4. **Tab to the checkbox** labelled *"Apply this label to any
+   object with the same role and position, ignoring name changes."*
+   Press **Space** to tick it.
+5. Press **Enter**.
+
+**Pass:** NVDA announces **Label saved**.
+
+6. Type some text in Notepad so the window title changes to
+   e.g. *"Untitled - Notepad"* → *"hello world - Notepad"*.
+7. Press **NVDA+Numpad5** to report the current object.
+
+**Pass:** NVDA still announces **Editor**. The wildcard label
+matched the edit area even though the ancestor window's title
+drifted.
+
+**Fail:** NVDA announces "edit" (the original name). Capture the
+NVDA log per section 13 — something in the pattern matching is
+not firing.
+
+---
+
+## 13. If anything fails: how to capture the detail we need
 
 1. Inside NVDA press **NVDA+N** &rarr; **Tools** &rarr; **View log**.
 2. The log window opens. Press **Ctrl+End** to jump to the bottom.
@@ -356,6 +386,7 @@ Section 8 Search           : PASS / FAIL — notes:
 Section 9 Persistence      : PASS / FAIL — notes:
 Section 10 Corrupt recovery: PASS / FAIL — notes:
 Section 11 Update check    : PASS / FAIL — notes:
+Section 12 Wildcard label  : PASS / FAIL — notes:
 
 Anything that crashed, hung, or felt wrong:
 

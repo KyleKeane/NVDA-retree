@@ -108,6 +108,35 @@ A plain `dict[ObjectId, str]`. Setting the empty string clears the
 entry. Reading a missing entry returns `None` so callers can fall back
 to the object's automation name.
 
+`get()` also applies a **pattern fallback**: if the exact `ObjectId`
+is not in the dict, it scans stored keys looking for patterns (see
+below) that match the live id. When several patterns match, the
+most-specific wins (fewest wildcard slots; see
+`patterns.specificity`). Exact hits always beat any pattern because
+the dict lookup runs first.
+
+### `patterns.py`
+
+A tiny stdlib module that lets stored IDs contain `WILDCARD`
+(aliased to Python's `None`) in per-node `discriminator` or
+`sibling_index` slots. `patterns.matches(stored, live)` returns
+True when every non-wildcard slot of `stored` equals the
+corresponding slot of `live`. `app_name` and per-node `role` are
+**locked** and never wildcardable — role changes are semantically
+meaningful and should produce a different identity.
+
+`patterns.name_agnostic(obj_id)` returns a copy with the leaf
+node's discriminator replaced by `WILDCARD`. This is the one
+transform the label dialog's "ignore name changes" checkbox
+applies. Broader transforms (whole-path wildcards, regex, anchor-
+relative paths) are deliberate future work.
+
+Only `LabelStore` consumes patterns today. `SemanticTree.assign`
+explicitly rejects pattern IDs with a `ValueError` because
+resolving a wildcard parent or child back to a live NVDAObject
+during navigation requires pattern-aware `search_subtree` /
+`_focus_by_id`, which is not implemented yet.
+
 ### `ObjectId` (identity.py)
 
 A two-tuple `(app_name, path)` where `path` is a tuple of
