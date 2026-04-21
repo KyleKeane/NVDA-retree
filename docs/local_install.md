@@ -171,6 +171,21 @@ Use this once you want to smoke-test exactly what a user would install,
 or when you want to share a build with someone who doesn't have the
 checkout. This is also how the add-on would eventually ship.
 
+### Shortcut: grab the pre-built `.nvda-addon` from GitHub
+
+You don't *have* to build locally. Every merge to `main` automatically
+publishes a fresh `.nvda-addon` at:
+
+<https://github.com/KyleKeane/NVDA-retree/releases/tag/main-latest>
+
+Download the attached `semanticTree-X.Y.Z.nvda-addon` and jump to
+Step 2 below. That tag is force-moved on every push to `main`, so
+the download URL stays stable and the file there always matches
+the current `main`. Marked as a pre-release so NVDA's in-add-on
+update check ignores it (it only offers stable `vX.Y.Z`).
+
+If you want a specific commit or unmerged PR, build locally:
+
 ### Step 1. Clone and build
 
 ```powershell

@@ -152,6 +152,17 @@ are never touched by an update. See `addon/doc/en/readme.md` for
 the user-side walkthrough, and [`CONTRIBUTING.md`](CONTRIBUTING.md#releasing)
 for how to cut a release that propagates to existing installs.
 
+### Running bleeding-edge main
+
+Every merge to `main` auto-publishes a rolling pre-release at
+[`releases/tag/main-latest`](https://github.com/KyleKeane/NVDA-retree/releases/tag/main-latest).
+That tag is force-moved on every push, so the download URL is
+stable and the `.nvda-addon` there always matches the current
+`main`. The in-NVDA updater **does not** offer this build (it
+only surfaces stable `vX.Y.Z` releases); to try `main` you
+download the `.nvda-addon` from that page and install it manually
+via NVDA → Tools → Add-on store → Install from external source.
+
 ## Running the tests
 
 ```
