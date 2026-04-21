@@ -20,6 +20,8 @@ derived on demand and lives elsewhere.
 
 from collections.abc import Hashable, Iterable, Iterator
 
+from . import patterns
+
 
 ObjectId = Hashable
 
@@ -35,6 +37,11 @@ class SemanticTree:
 	def assign(self, child_id: ObjectId, parent_id: ObjectId | None) -> None:
 		if child_id is None:
 			raise ValueError("child_id must not be None")
+		if patterns.is_pattern(child_id) or patterns.is_pattern(parent_id):
+			raise ValueError(
+				"Semantic-tree assignments cannot contain wildcards yet; "
+				"V1 pattern matching is only supported on labels."
+			)
 		if parent_id is not None and self._would_cycle(child_id, parent_id):
 			raise CycleError(f"Assigning {child_id!r} under {parent_id!r} would create a cycle")
 		self._parent[child_id] = parent_id
@@ -97,18 +104,35 @@ class SemanticTree:
 		return False
 
 	def to_dict(self) -> dict[str, list]:
-		def encode(value):
-			return list(value) if isinstance(value, tuple) else value
-
 		return {
-			"assignments": [[encode(c), encode(p)] for c, p in self._parent.items()],
+			"assignments": [
+				[_encode(c), _encode(p)] for c, p in self._parent.items()
+			],
 		}
 
 	@classmethod
 	def from_dict(cls, data: dict[str, list]) -> "SemanticTree":
 		tree = cls()
 		for child, parent in data.get("assignments", []):
-			c = tuple(child) if isinstance(child, list) else child
-			p = tuple(parent) if isinstance(parent, list) else parent
-			tree._parent[c] = p
+			tree._parent[_decode(child)] = _decode(parent)
 		return tree
+
+
+def _encode(value):
+	"""Recursively turn tuples into lists so JSON can serialise them."""
+	if isinstance(value, tuple):
+		return [_encode(v) for v in value]
+	return value
+
+
+def _decode(value):
+	"""Recursively turn JSON arrays back into tuples.
+
+	Nested :class:`ObjectId` paths arrive as nested lists from
+	:func:`json.load`, and lists are not hashable — a flat
+	``tuple(oid)`` would leave the inner path as an unhashable
+	list and break every subsequent dict lookup.
+	"""
+	if isinstance(value, list):
+		return tuple(_decode(v) for v in value)
+	return value

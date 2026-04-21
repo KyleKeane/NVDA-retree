@@ -17,6 +17,24 @@ mental model without changing the application you are reading.
 All shortcuts can be re-bound from NVDA → Preferences → Input gestures
 → Semantic Tree.
 
+## Labels that survive name changes
+
+When you press **NVDA + Ctrl + Shift + L** to set a custom label,
+the dialog has a checkbox: *"Apply this label to any object with
+the same role and position, ignoring name changes."*
+
+* Leave it **unchecked** (the default) to attach the label to this
+  exact object. The label will only be announced for an object
+  whose name has not changed since you set it.
+* Tick it to attach the label to any object in the same spot with
+  the same role, no matter what the name says. Useful for buttons
+  whose label text shifts across sessions — for example "Save" vs
+  "Save As…" — where you want the same custom label to apply in
+  either case.
+
+If you later set another, more specific label for the same object,
+the exact label wins over the wildcard one.
+
 ## Search query syntax
 
 Multiple terms are AND-ed. Terms can be scoped to a facet with

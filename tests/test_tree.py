@@ -1,5 +1,6 @@
 from testing_helpers import raises
 
+from semanticTree.patterns import WILDCARD
 from semanticTree.tree import CycleError, SemanticTree
 
 
@@ -60,3 +61,33 @@ def test_round_trip_serialisation():
 	assert list(restored.assigned_ids()) == list(t.assigned_ids())
 	for oid in t.assigned_ids():
 		assert restored.parent_of(oid) == t.parent_of(oid)
+
+
+def test_round_trip_preserves_nested_path_hashability():
+	"""Regression: from_dict used to return outer tuples whose inner
+	paths were still lists — unhashable, and silently quarantined
+	on the next load."""
+	exact = ("firefox", (("window", "MozillaWindowClass", 0), ("button", "Reload", 2)))
+	t = SemanticTree()
+	t.assign(exact, None)
+	restored = SemanticTree.from_dict(t.to_dict())
+	assert restored.is_assigned(exact)
+	assert restored.parent_of(exact) is None
+
+
+# ---------- pattern guard ----------
+
+
+def test_assign_rejects_pattern_child_id():
+	t = SemanticTree()
+	pattern = ("firefox", (("button", WILDCARD, 0),))
+	with raises(ValueError):
+		t.assign(pattern, None)
+
+
+def test_assign_rejects_pattern_parent_id():
+	t = SemanticTree()
+	t.assign("child", None)
+	pattern_parent = ("firefox", (("pane", WILDCARD, 0),))
+	with raises(ValueError):
+		t.assign("child", pattern_parent)
