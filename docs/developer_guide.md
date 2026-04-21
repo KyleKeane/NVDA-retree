@@ -110,17 +110,37 @@ to the object's automation name.
 
 ### `ObjectId` (identity.py)
 
-A tuple of `(app, windowHandle, windowControlID, role, name,
-automationId, indexInParent)`. No single field is strictly stable
-(names change, handles get reused), but the *composite* is stable
-enough that the same visible element produces the same ID inside a
-session and across most restarts. The tuple is hashable so it can be
-used as a dict key and serialised to JSON as an array.
+A two-tuple `(app_name, path)` where `path` is a tuple of
+`(role, discriminator, sibling_index)` node signatures walking from
+the root ancestor down to the object. Nothing OS-assigned appears
+anywhere, so the ID survives Windows closing and reopening the app.
 
-If you improve identity in the future (e.g. by using
-`uniqueID`/`IA2UniqueID` when available), do it inside
-`identity.get_object_id` only. The rest of the code treats `ObjectId`
-as opaque.
+The per-node `discriminator` is whichever of these three is most
+stable at that level, in order:
+
+1. `UIAAutomationId` / `automationId`, if it looks stable (non-empty,
+   not all-digits, not GUID-shaped, not absurdly long). WPF,
+   Electron and some web surfaces auto-generate IDs that fail this
+   check and fall through.
+2. `windowClassName`. Stable for Win32-backed objects (main windows
+   `"Notepad"`, `"MozillaWindowClass"`; inner controls `"Edit"`,
+   `"Button"`). This is what rescues us from dynamic window titles:
+   a Notepad window named `"Document1 - Notepad"` and one named
+   `"Document2 - Notepad"` both discriminate as `"Notepad"`.
+3. `name`. Fallback for pure UIA / HTML surfaces without a
+   `windowClassName`.
+
+`sibling_index` disambiguates when `(role, discriminator)` collides
+across siblings — e.g. three unlabelled `listItem`s become
+`sibling_index` 0, 1, 2 under the same parent.
+
+IDs are hashable so they can be dict keys and serialised to JSON as
+nested arrays.
+
+If you improve identity further (wildcards for pattern matching,
+using `IA2UniqueID` when available, learned anchors from observing
+multiple sessions), do it inside `identity.get_object_id` only. The
+rest of the code treats `ObjectId` as opaque.
 
 ### `storage.py`
 

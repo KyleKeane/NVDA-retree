@@ -6,6 +6,27 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed — state-file schema bump (breaking)
+- **Object identity is now stable across app restarts.** The old
+  identity tuple included `windowHandle`, which Windows reassigns
+  every time a window opens — so labels and assignments did not
+  actually survive closing and reopening an app. The new identity
+  is `(app_name, path)` where `path` is a tuple of
+  `(role, discriminator, sibling_index)` node signatures walking
+  root-to-self. Nothing OS-assigned appears anywhere. See
+  `docs/developer_guide.md` "`ObjectId`" for the per-node
+  discriminator policy.
+- **`semanticTree.json` schema version bumped from 1 to 2.**
+  Existing v1 state files are quarantined on first load
+  (renamed to `<path>.corrupt-<timestamp>`, clear warning in the
+  NVDA log) and the add-on starts empty. The old IDs cannot be
+  remapped without a live accessibility tree, so a clean break is
+  the honest choice. Re-create any labels / assignments you care
+  about on first run.
+- Bundled `docs/smoke_test.md` section 9 split into 9a (re-open
+  app) and 9b (restart NVDA) so the app-restart case is explicitly
+  exercised during smoke testing.
+
 ### Added
 - `docs/smoke_test.md` — standalone, no-context-required smoke-test
   walkthrough. Hand it to anyone you ask to exercise a build
