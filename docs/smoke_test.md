@@ -233,16 +233,35 @@ expected for a current Notepad).
 
 ## 9. Test: Persistence across a restart
 
-1. Close Notepad.
-2. Press **NVDA+Q**, Enter to quit NVDA entirely.
-3. Start NVDA again.
-4. Reopen Notepad, type some text, press **NVDA+Numpad5** to land
+This is the **critical** persistence test — the whole point of the
+add-on is that labels and assignments keep working after you close
+and reopen the apps you have labelled.
+
+Run both variants:
+
+### 9a. Re-open Notepad (Windows reassigns the window handle)
+
+1. Close Notepad. Do NOT quit NVDA.
+2. Reopen Notepad, type some text, press **NVDA+Numpad5** to land
    on the edit area.
 
-**Pass:** NVDA still announces **My Notepad** (your label survived
-the restart).
+**Pass:** NVDA still announces **My Notepad**.
 
-**Fail:** NVDA announces "edit" or similar — the label was lost.
+**Fail:** NVDA announces "edit" or similar — the label did not
+survive Windows assigning a fresh window handle.
+
+### 9b. Restart NVDA entirely
+
+1. Press **NVDA+Q**, Enter to quit NVDA entirely.
+2. Start NVDA again.
+3. Reopen Notepad (if it isn't still open), type some text, press
+   **NVDA+Numpad5** to land on the edit area.
+
+**Pass:** NVDA still announces **My Notepad** (label survived
+NVDA's own restart and loaded fresh from `semanticTree.json`).
+
+**Fail:** NVDA announces "edit" or similar — the label was lost
+on disk.
 
 ---
 

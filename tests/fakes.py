@@ -1,11 +1,11 @@
 """Fake NVDA-like objects plus a walker that uses real identity logic.
 
-``FakeObject`` mirrors the bits of the NVDAObject surface area our code
-actually touches: ``name``, ``role``, ``parent``, ``children``,
-``windowHandle``, ``windowControlID``, ``appModule.appName``,
-``indexInParent``, and ``UIAAutomationId``. ``FakeWalker`` delegates
-``id_of`` to :func:`semanticTree.identity.get_object_id` so that the
-tests exercise the same identity rule the production walker uses.
+``FakeObject`` mirrors the bits of the NVDAObject surface area our
+identity code actually reads: ``name``, ``role``, ``parent``,
+``children``, ``appModule.appName``, ``UIAAutomationId``, and
+``windowClassName``. ``FakeWalker`` delegates ``id_of`` to
+:func:`semanticTree.identity.get_object_id` so that tests exercise
+the same identity rule the production walker uses.
 """
 
 from collections.abc import Iterable
@@ -26,14 +26,13 @@ class FakeObject:
 		children: list["FakeObject"] | None = None,
 		app_name: str = "test",
 		automation_id: str = "",
+		window_class_name: str = "",
 	) -> None:
 		self.name = name
 		self.role = role
-		self.windowHandle = hash(name) & 0xFFFF
-		self.windowControlID = 0
 		self.appModule = FakeAppModule(app_name)
 		self.UIAAutomationId = automation_id
-		self.indexInParent = 0
+		self.windowClassName = window_class_name
 		self.parent: FakeObject | None = None
 		self._children: list[FakeObject] = []
 		for child in children or []:
@@ -41,7 +40,6 @@ class FakeObject:
 
 	def add(self, child: "FakeObject") -> "FakeObject":
 		child.parent = self
-		child.indexInParent = len(self._children)
 		self._children.append(child)
 		return child
 
