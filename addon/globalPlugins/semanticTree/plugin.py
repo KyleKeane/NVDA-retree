@@ -31,6 +31,36 @@ def _data_path() -> str:
 	return os.path.join(config_dir, "semanticTree.json")
 
 
+def _installed_version() -> str:
+	"""Read this add-on's installed version from NVDA's registered
+	add-on metadata. Falls back to reading ``manifest.ini`` directly
+	if the NVDA API call fails (e.g. during development via the
+	scratchpad, where there is no installed add-on record)."""
+	try:
+		import addonHandler  # type: ignore
+		for addon in addonHandler.getAvailableAddons():
+			if getattr(addon, "name", "") == "semanticTree":
+				manifest = getattr(addon, "manifest", {}) or {}
+				version = manifest.get("version")
+				if version:
+					return str(version)
+	except Exception:
+		pass
+	# Scratchpad / unit-test fallback: read the shipped manifest.
+	manifest_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+		os.path.abspath(__file__)))), "manifest.ini")
+	try:
+		with open(manifest_path, encoding="utf-8") as f:
+			for line in f:
+				stripped = line.strip()
+				if stripped.startswith("version"):
+					_, _, value = stripped.partition("=")
+					return value.strip().strip('"').strip("'")
+	except Exception:
+		pass
+	return "0.0.0"
+
+
 def _role_text(obj) -> str:
 	"""Human-readable role name, tolerant of NVDA API drift.
 
@@ -86,8 +116,49 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self._tree, self._labels = storage.load(self._path)
 		self._walker = NVDAWalker()
 		self._nav = SemanticNavigator(self._tree, self._walker)
+		self._update_menu_item = None
+		self._register_tools_menu_item()
+
+	def _register_tools_menu_item(self) -> None:
+		"""Add 'Check for Semantic Tree updates…' under NVDA → Tools.
+
+		All of this is wrapped in try/except because the exact shape of
+		``gui.mainFrame.sysTrayIcon.toolsMenu`` has varied across NVDA
+		versions; a failure here should not prevent the add-on from
+		loading."""
+		try:
+			import wx  # type: ignore
+			import gui  # type: ignore
+			tools_menu = gui.mainFrame.sysTrayIcon.toolsMenu
+			self._update_menu_item = tools_menu.Append(
+				wx.ID_ANY,
+				_("Check for Semantic Tree &updates…"),
+				_("Ask GitHub whether a newer version of the Semantic Tree add-on is available."),
+			)
+			gui.mainFrame.sysTrayIcon.Bind(
+				wx.EVT_MENU,
+				self._on_check_for_updates,
+				self._update_menu_item,
+			)
+		except Exception:
+			self._update_menu_item = None
+
+	def _unregister_tools_menu_item(self) -> None:
+		if self._update_menu_item is None:
+			return
+		try:
+			import gui  # type: ignore
+			gui.mainFrame.sysTrayIcon.toolsMenu.Remove(self._update_menu_item)
+		except Exception:
+			pass
+		self._update_menu_item = None
+
+	def _on_check_for_updates(self, _event) -> None:
+		from .ui.update import run_update_check
+		run_update_check(_installed_version())
 
 	def terminate(self) -> None:
+		self._unregister_tools_menu_item()
 		try:
 			storage.save(self._path, self._tree, self._labels)
 		finally:
