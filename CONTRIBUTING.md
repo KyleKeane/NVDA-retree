@@ -114,6 +114,21 @@ attached `.nvda-addon`. So "shipping a new version" is: publish a
 GitHub Release on a `vX.Y.Z` tag with the built `.nvda-addon`
 attached. Everything below automates that.
 
+### The rolling `main-latest` build (auto, for testers)
+
+Separately from stable releases, every merge to `main` triggers
+the `dev-release` job in `.github/workflows/ci.yml` which builds
+a fresh `.nvda-addon` and attaches it to a pre-release tagged
+`main-latest`. The tag is force-moved on every push, so the URL
+stays stable:
+
+<https://github.com/KyleKeane/NVDA-retree/releases/tag/main-latest>
+
+This is what a tester should install when they want to exercise
+the current state of `main` without waiting for a stable release.
+The in-NVDA updater intentionally **does not** surface pre-
+releases, so normal users only see `vX.Y.Z`.
+
 ### Step 1 — pre-flight
 
 Before you start a release:

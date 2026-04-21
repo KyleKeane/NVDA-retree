@@ -7,6 +7,20 @@ and this project aims to follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Rolling `main-latest` pre-release.** New `dev-release` job in
+  `.github/workflows/ci.yml` runs on every merge to `main` and
+  force-updates a single pre-release tagged `main-latest` with a
+  fresh `.nvda-addon` built from the current source. Stable URL:
+  <https://github.com/KyleKeane/NVDA-retree/releases/tag/main-latest>.
+  Use this to install the bleeding edge without waiting for a
+  stable release. NVDA's in-add-on update check ignores it
+  because `/releases/latest` excludes pre-releases, so regular
+  users only see stable `vX.Y.Z` releases. Documented in
+  `README.md`, `docs/local_install.md`, and the
+  `CONTRIBUTING.md` Releasing section.
+
+
+### Added
 - **Pattern matching for labels (V1).** New `patterns.py` module
   (stdlib only, ~120 lines) lets stored `ObjectId`s carry
   `WILDCARD` (`None`) in per-node `discriminator` or

@@ -45,3 +45,43 @@ jobs:
           name: semanticTree-addon
           path: dist/*.nvda-addon
           if-no-files-found: error
+
+  dev-release:
+    name: Publish main-latest dev build
+    # Only runs on merges to main, never on PRs. Updates a single
+    # rolling pre-release whose tag `main-latest` we force-move so
+    # the download URL stays stable:
+    #   https://github.com/KyleKeane/NVDA-retree/releases/tag/main-latest
+    # Stable releases (vX.Y.Z) are untouched. The self-updater
+    # (updater.py) uses /releases/latest which excludes pre-releases
+    # by default, so regular users keep being offered tagged
+    # versions only.
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build add-on
+        run: python tools/build_addon.py --output-dir dist
+      - name: Update rolling main-latest release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: main-latest
+          name: "Latest development build (main)"
+          body: |
+            Rolling build of `main` @ ${{ github.sha }}.
+
+            Always reflects the current state of the main branch.
+            Install this manually if you want to run bleeding-edge
+            code before a stable release is cut.
+
+            **Not offered by the in-NVDA updater.** The updater
+            only surfaces stable `vX.Y.Z` releases. See
+            `CONTRIBUTING.md` for how stable releases are cut.
+          prerelease: true
+          files: dist/*.nvda-addon
